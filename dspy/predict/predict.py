@@ -1,5 +1,6 @@
 import logging
 import random
+from typing import Generic, TypeVar, cast
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
@@ -16,8 +17,10 @@ from dspy.utils.callback import BaseCallback
 
 logger = logging.getLogger(__name__)
 
+TInput = TypeVar("TInput")
+TOutput = TypeVar("TOutput")
 
-class Predict(Module, Parameter):
+class Predict(Module, Parameter, Generic[TInput, TOutput]):
     """Basic DSPy module that maps inputs to outputs using a language model.
 
     Args:
@@ -32,7 +35,7 @@ class Predict(Module, Parameter):
                 predict(q="What is 1 + 52?", config={"rollout_id": 2, "temperature": 1.0})
     """
 
-    def __init__(self, signature: str | type[Signature], callbacks: list[BaseCallback] | None = None, **config):
+    def __init__(self, signature: str | type[Signature[TInput, TOutput]], callbacks: list[BaseCallback] | None = None, **config):
         super().__init__(callbacks=callbacks)
         self.stage = random.randbytes(8).hex()
         self.signature = ensure_signature(signature)
@@ -97,7 +100,7 @@ class Predict(Module, Parameter):
             f"`predict({input_fields[0]}=input_value, ...)`."
         )
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs) -> TOutput | Prediction:
         if args:
             raise ValueError(self._get_positional_args_error_message())
 
@@ -185,7 +188,7 @@ class Predict(Module, Parameter):
 
         return should_stream
 
-    def forward(self, **kwargs):
+    def forward(self, **kwargs) -> TOutput:
         lm, config, signature, demos, kwargs = self._forward_preprocess(**kwargs)
 
         adapter = settings.adapter or ChatAdapter()
@@ -197,7 +200,7 @@ class Predict(Module, Parameter):
             with settings.context(send_stream=None):
                 completions = adapter(lm, lm_kwargs=config, signature=signature, demos=demos, inputs=kwargs)
 
-        return self._forward_postprocess(completions, signature, **kwargs)
+        return cast(TOutput, self._forward_postprocess(completions, signature, **kwargs))
 
     async def aforward(self, **kwargs):
         lm, config, signature, demos, kwargs = self._forward_preprocess(**kwargs)

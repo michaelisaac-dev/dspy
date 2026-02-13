@@ -23,7 +23,7 @@ import sys
 import types
 import typing
 from copy import deepcopy
-from typing import Any
+from typing import Any, Generic, TypeVar, overload
 
 from pydantic import BaseModel, Field, create_model
 from pydantic.fields import FieldInfo
@@ -40,6 +40,12 @@ def _default_instructions(cls) -> str:
 class SignatureMeta(type(BaseModel)):
     def __call__(cls, *args, **kwargs):
         if cls is Signature:
+            input_type = kwargs.get("input_type")
+            output_type = kwargs.get("output_type")
+
+            if input_type is not None and output_type is not None:
+                return cls._create_typed_signature(input_type, output_type)
+
             # We don't create an actual Signature instance, instead, we create a new Signature class.
             custom_types = kwargs.pop("custom_types", None)
 
@@ -258,11 +264,26 @@ class SignatureMeta(type(BaseModel)):
         return f"{cls.__name__}({cls.signature}\n    instructions={cls.instructions!r}\n    {field_repr}\n)"
 
 
-class Signature(BaseModel, metaclass=SignatureMeta):
-    ""
+TInput = TypeVar("TInput", bound=Any)
+TOutput = TypeVar("TOutput", bound=Any)
+
+
+class Signature(BaseModel, Generic[TInput, TOutput], metaclass=SignatureMeta):
+    """"""
 
     # Note: Don't put a docstring here, as it will become the default instructions
-    # for any signature that doesn't define it's own instructions.
+    # for any signature that doesn't define its own instructions.
+
+    @overload
+    def __new__(cls, input_type: TInput, output_type: TOutput) -> type["Signature[TInput, TOutput]"]:
+        ...
+
+    @overload
+    def __new__(cls, *args, **kwargs) -> type["Signature"]:
+        ...
+
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls)
 
     @classmethod
     def with_instructions(cls, instructions: str) -> type["Signature"]:
@@ -292,6 +313,47 @@ class Signature(BaseModel, metaclass=SignatureMeta):
             ```
         """
         return Signature(cls.fields, instructions)
+
+    @classmethod
+    def _create_typed_signature(cls, input_type: type[TInput], output_type: type[TOutput]) -> type[
+        "Signature[TInput, TOutput]"]:
+        """
+        Creates a new Signature class based on input/output models.
+        """
+        fields = {}
+
+        # 1. Map Input Fields
+        # We handle both Pydantic models (model_fields) and standard classes (__annotations__)
+        if hasattr(input_type, "model_fields"):
+            for name, field in input_type.model_fields.items():
+                fields[name] = (field.annotation, InputField(desc=field.description))
+        else:
+            for name, annotation in input_type.__annotations__.items():
+                fields[name] = (annotation, InputField())
+
+        # 2. Map Output Fields
+        if hasattr(output_type, "model_fields"):
+            for name, field in output_type.model_fields.items():
+                fields[name] = (field.annotation, OutputField(desc=field.description))
+        else:
+            for name, annotation in output_type.__annotations__.items():
+                fields[name] = (annotation, OutputField())
+
+        # 3. Construct the new Class
+        new_signature_class = type(
+            f"{input_type.__name__}To{output_type.__name__}",
+            (cls,),  # Inherit from Signature
+            {
+                "__annotations__": {k: v[0] for k, v in fields.items()},
+                **{k: v[1] for k, v in fields.items()}
+            }
+        )
+
+        # 4. Attach the original types
+        new_signature_class.input_type = input_type
+        new_signature_class.output_type = output_type
+
+        return typing.cast(type["Signature[type[TInput], type[TOutput]]"], new_signature_class)
 
     @classmethod
     def with_updated_fields(cls, name: str, type_: type | None = None, **kwargs: dict[str, Any]) -> type["Signature"]:
