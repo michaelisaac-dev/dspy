@@ -43,6 +43,12 @@ class SignatureMeta(type(BaseModel)):
             input_type = kwargs.get("input_type")
             output_type = kwargs.get("output_type")
 
+            if (input_type is None) != (output_type is None):
+                raise ValueError(
+                    "You must provide both 'input_type' and 'output_type' to create a typed signature. "
+                    "Received only one."
+                )
+
             if input_type is not None and output_type is not None:
                 return cls._create_typed_signature(input_type, output_type)
 
@@ -323,7 +329,6 @@ class Signature(BaseModel, Generic[TInput, TOutput], metaclass=SignatureMeta):
         fields = {}
 
         # 1. Map Input Fields
-        # We handle both Pydantic models (model_fields) and standard classes (__annotations__)
         if hasattr(input_type, "model_fields"):
             for name, field in input_type.model_fields.items():
                 fields[name] = (field.annotation, InputField(desc=field.description))
@@ -339,7 +344,7 @@ class Signature(BaseModel, Generic[TInput, TOutput], metaclass=SignatureMeta):
             for name, annotation in output_type.__annotations__.items():
                 fields[name] = (annotation, OutputField())
 
-        # 3. Construct the new Class
+        # 3. Construct the new signature class
         new_signature_class = type(
             f"{input_type.__name__}To{output_type.__name__}",
             (cls,),  # Inherit from Signature
