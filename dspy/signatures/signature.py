@@ -328,23 +328,25 @@ class Signature(BaseModel, Generic[TInput, TOutput], metaclass=SignatureMeta):
         """
         fields = {}
 
-        # 1. Map Input Fields
-        if hasattr(input_type, "model_fields"):
-            for name, field in input_type.model_fields.items():
-                fields[name] = (field.annotation, InputField(desc=field.description))
-        else:
-            for name, annotation in input_type.__annotations__.items():
-                fields[name] = (annotation, InputField())
+        for model, field_factory, field_type_str in [
+            (input_type, InputField, "input"),
+            (output_type, OutputField, "output")
+        ]:
+            for name, annotation in getattr(model, "__annotations__", {}).items():
+                attr = getattr(model, name, None)
 
-        # 2. Map Output Fields
-        if hasattr(output_type, "model_fields"):
-            for name, field in output_type.model_fields.items():
-                fields[name] = (field.annotation, OutputField(desc=field.description))
-        else:
-            for name, annotation in output_type.__annotations__.items():
-                fields[name] = (annotation, OutputField())
+                is_correct_dspy_field = (
+                        isinstance(attr, FieldInfo) and
+                        attr.json_schema_extra is not None and
+                        attr.json_schema_extra.get("__dspy_field_type") == field_type_str
+                )
 
-        # 3. Construct the new signature class
+                # Use the user's field if valid InputField or OutputField, otherwise create a new one using the factory
+                field_obj = attr if is_correct_dspy_field else field_factory()
+
+                fields[name] = (annotation, field_obj)
+
+        # Construct the new signature class
         new_signature_class = type(
             f"{input_type.__name__}To{output_type.__name__}",
             (cls,),  # Inherit from Signature
@@ -354,7 +356,7 @@ class Signature(BaseModel, Generic[TInput, TOutput], metaclass=SignatureMeta):
             }
         )
 
-        # 4. Attach the original types
+        # Attach the original types
         new_signature_class.input_type = input_type
         new_signature_class.output_type = output_type
 
