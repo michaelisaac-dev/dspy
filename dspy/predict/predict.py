@@ -1,5 +1,6 @@
 import logging
 import random
+from dataclasses import asdict
 from typing import Generic, TypeVar, cast
 
 from pydantic import BaseModel
@@ -35,7 +36,7 @@ class Predict(Module, Parameter, Generic[TInput, TOutput]):
                 predict(q="What is 1 + 52?", config={"rollout_id": 2, "temperature": 1.0})
     """
 
-    def __init__(self, signature: str | type[Signature[TInput, TOutput]], callbacks: list[BaseCallback] | None = None, **config):
+    def __init__(self, signature: str | Signature[TInput, TOutput], callbacks: list[BaseCallback] | None = None, **config):
         super().__init__(callbacks=callbacks)
         self.stage = random.randbytes(8).hex()
         self.signature = ensure_signature(signature)
@@ -95,20 +96,25 @@ class Predict(Module, Parameter, Generic[TInput, TOutput]):
     def _get_positional_args_error_message(self):
         input_fields = list(self.signature.input_fields.keys())
         return (
-            "Positional arguments are not allowed when calling `dspy.Predict`, must use keyword arguments "
-            f"that match your signature input fields: '{', '.join(input_fields)}'. For example: "
-            f"`predict({input_fields[0]}=input_value, ...)`."
+            "You may use either positional or keyword arguments when calling `dspy.Predict`, not both. "
+            "Positional arguments must match be passed as a single object of the input type specified in the signature; "
+            f"keywork argument must match input fields: '{', '.join(input_fields)}'. For example: "
+            f"`predict({TInput.__name__}({input_fields[0]}=input_value, ...))` or `predict({input_fields[0]}=input_value, ...)`."
         )
 
-    def __call__(self, *args, **kwargs) -> TOutput | Prediction:
-        if args:
-            raise ValueError(self._get_positional_args_error_message())
+    def __call__(self, arg: TInput | None = None, /, **kwargs) -> TOutput | Prediction:
+        if arg is not None:
+            if kwargs:
+                raise ValueError(self._get_positional_args_error_message())
+            kwargs = asdict(arg)
 
         return super().__call__(**kwargs)
 
-    async def acall(self, *args, **kwargs):
-        if args:
-            raise ValueError(self._get_positional_args_error_message())
+    async def acall(self, arg: TInput | None = None, /, **kwargs) -> TOutput | Prediction:
+        if arg is not None:
+            if kwargs:
+                raise ValueError(self._get_positional_args_error_message())
+            kwargs = asdict(arg)
 
         return await super().acall(**kwargs)
 
