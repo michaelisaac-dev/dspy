@@ -99,7 +99,8 @@ class Predict(Module, Parameter, Generic[TInput, TOutput]):
             "You may use either positional or keyword arguments when calling `dspy.Predict`, not both. "
             "Positional arguments must match be passed as a single object of the input type specified in the signature; "
             f"keywork argument must match input fields: '{', '.join(input_fields)}'. For example: "
-            f"`predict({TInput.__name__}({input_fields[0]}=input_value, ...))` or `predict({input_fields[0]}=input_value, ...)`."
+            f"`predict({TInput.__name__}({input_fields[0]}=input_value, ...))` or `predict({input_fields[0]}=input_value,"
+            f" ...)`."
         )
 
     def __call__(self, arg: TInput | None = None, /, **kwargs) -> TOutput | Prediction:
