@@ -1,7 +1,7 @@
 import logging
 import random
 from dataclasses import asdict
-from typing import Generic, TypeVar, cast
+from typing import TypeVar, cast
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput")
 
-class Predict(Module, Parameter, Generic[TInput, TOutput]):
+class Predict(Module[TInput, TOutput], Parameter):
     """Basic DSPy module that maps inputs to outputs using a language model.
 
     Args:
