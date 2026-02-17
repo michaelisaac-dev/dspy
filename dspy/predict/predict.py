@@ -1,6 +1,5 @@
 import logging
 import random
-from dataclasses import asdict
 from typing import TypeVar, cast
 
 from pydantic import BaseModel
@@ -97,7 +96,7 @@ class Predict(Module[TInput, TOutput], Parameter):
         input_fields = list(self.signature.input_fields.keys())
         return (
             "You may use either positional or keyword arguments when calling `dspy.Predict`, not both. "
-            "Positional arguments must match be passed as a single object of the input type specified in the signature; "
+            "Positional arguments must match be passed as an instance of the input type specified in the signature; "
             f"keywork argument must match input fields: '{', '.join(input_fields)}'. For example: "
             f"`predict({TInput.__name__}({input_fields[0]}=input_value, ...))` or `predict({input_fields[0]}=input_value,"
             f" ...)`."
@@ -105,17 +104,17 @@ class Predict(Module[TInput, TOutput], Parameter):
 
     def __call__(self, arg: TInput | None = None, /, **kwargs) -> TOutput | Prediction:
         if arg is not None:
-            if kwargs:
+            if kwargs or not hasattr(arg, "__dict__"):
                 raise ValueError(self._get_positional_args_error_message())
-            kwargs = asdict(arg)
+            kwargs = vars(arg)
 
         return super().__call__(**kwargs)
 
     async def acall(self, arg: TInput | None = None, /, **kwargs) -> TOutput | Prediction:
         if arg is not None:
-            if kwargs:
+            if kwargs or not hasattr(arg, "__dict__"):
                 raise ValueError(self._get_positional_args_error_message())
-            kwargs = asdict(arg)
+            kwargs = vars(arg)
 
         return await super().acall(**kwargs)
 
