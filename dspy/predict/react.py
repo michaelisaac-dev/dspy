@@ -1,21 +1,20 @@
 import logging
-from typing import TYPE_CHECKING, Any, Callable, Literal
+from typing import Any, Callable, Literal, TypeVar
 
 from litellm import ContextWindowExceededError
 
 import dspy
 from dspy.adapters.types.tool import Tool
 from dspy.primitives.module import Module
-from dspy.signatures.signature import ensure_signature
+from dspy.signatures.signature import Signature, ensure_signature
 
 logger = logging.getLogger(__name__)
 
-if TYPE_CHECKING:
-    from dspy.signatures.signature import Signature
+TInput = TypeVar("TInput")
+TOutput = TypeVar("TOutput")
 
-
-class ReAct(Module):
-    def __init__(self, signature: type["Signature"], tools: list[Callable], max_iters: int = 20):
+class ReAct(Module[TInput, TOutput]):
+    def __init__(self, signature: str | type["Signature"] | Signature[TInput, TOutput], tools: list[Callable], max_iters: int = 20):
         """
         ReAct stands for "Reasoning and Acting," a popular paradigm for building tool-using agents.
         In this approach, the language model is iteratively provided with a list of tools and has
@@ -93,9 +92,25 @@ class ReAct(Module):
         trajectory_signature = dspy.Signature(f"{', '.join(trajectory.keys())} -> x")
         return adapter.format_user_message_content(trajectory_signature, trajectory)
 
-    def forward(self, *args, **input_args):
+    def _get_positional_args_error_message(self):
+        input_fields = list(self.signature.input_fields.keys())
+        return (
+            "You may use either positional or keyword arguments when calling `dspy.ReAct`, not both. "
+            "Positional arguments must match be passed as an instance of the input type specified in the signature; "
+            f"keywork argument must match input fields: '{', '.join(input_fields)}'. For example: "
+            f"`react({TInput.__name__}({input_fields[0]}=input_value, ...))` or `react({input_fields[0]}=input_value,"
+            f" ...)`."
+        )
+
+    def forward(self, arg: TInput | None = None, /, **input_args):
         trajectory = {}
         max_iters = input_args.pop("max_iters", self.max_iters)
+
+        if arg is not None:
+            if input_args or not hasattr(arg, "__dict__"):
+                raise ValueError(self._get_positional_args_error_message())
+            input_args = vars(arg)
+
         for idx in range(max_iters):
             try:
                 pred = self._call_with_potential_trajectory_truncation(self.react, trajectory, **input_args)
@@ -116,11 +131,17 @@ class ReAct(Module):
                 break
 
         extract = self._call_with_potential_trajectory_truncation(self.extract, trajectory, **input_args)
-        return dspy.Prediction(*args, trajectory=trajectory, **extract)
+        return dspy.Prediction(trajectory=trajectory, **extract)
 
-    async def aforward(self, *args, **input_args):
+    async def aforward(self, arg: TInput | None = None, /, **input_args):
         trajectory = {}
         max_iters = input_args.pop("max_iters", self.max_iters)
+
+        if arg is not None:
+            if input_args or not hasattr(arg, "__dict__"):
+                raise ValueError(self._get_positional_args_error_message())
+            input_args = vars(arg)
+
         for idx in range(max_iters):
             try:
                 pred = await self._async_call_with_potential_trajectory_truncation(self.react, trajectory, **input_args)
@@ -141,7 +162,7 @@ class ReAct(Module):
                 break
 
         extract = await self._async_call_with_potential_trajectory_truncation(self.extract, trajectory, **input_args)
-        return dspy.Prediction(*args, trajectory=trajectory, **extract)
+        return dspy.Prediction(trajectory=trajectory, **extract)
 
     def _call_with_potential_trajectory_truncation(self, module, trajectory, **input_args):
         for _ in range(3):
