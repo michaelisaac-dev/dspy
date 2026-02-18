@@ -260,7 +260,7 @@ class Predict(Module[TInput, TOutput], Parameter):
 
 def _get_type_name(type_annotation) -> str:
     """Helper method to get the name for a type annotation."""
-    from typing import get_args, get_origin
+    from typing import Literal, get_args, get_origin
 
     origin = get_origin(type_annotation)
     args = get_args(type_annotation)
@@ -270,6 +270,11 @@ def _get_type_name(type_annotation) -> str:
         if hasattr(type_annotation, "__name__"):
             return type_annotation.__name__
         return str(type_annotation)
+
+    # Handle Literal types
+    if origin is Literal:
+        literal_values = ", ".join(repr(arg) for arg in args)
+        return f"Literal[{literal_values}]"
 
     # Complex types like list[str], dict[str, int], generics, etc.
     if args:
@@ -282,7 +287,7 @@ def _get_type_name(type_annotation) -> str:
 
 def _is_value_compatible_with_type(value, expected_type: type) -> bool:
     """Check if a value is compatible with the expected type annotation."""
-    from typing import Union, get_args, get_origin
+    from typing import Literal, Union, get_args, get_origin
 
     # Handle None type
     if expected_type is type(None):
@@ -291,21 +296,31 @@ def _is_value_compatible_with_type(value, expected_type: type) -> bool:
     origin = get_origin(expected_type)
     args = get_args(expected_type)
 
+    # Handle Literal types
+    if origin is Literal:
+        return value in args
+
     # Handle Union types
     if origin is Union:
         return any(_is_value_compatible_with_type(value, arg) for arg in args)
 
     # Handle generic types (list[T], dict[K, V], etc.)
     if origin is not None:
-        # Check if value is an instance of the origin type (e.g., list, dict, tuple)
-        return isinstance(value, origin)
+        try:
+            return isinstance(value, origin)
+        except TypeError:
+            # Some types don't support isinstance
+            # In these cases, silently catch the exception
+            # and assume compatibility to avoid false warnings
+            return True
 
     # Handle primitives and custom classes
     try:
         return isinstance(value, expected_type)
     except TypeError:
-        # Some types don't support isinstance checks (e.g., generics)
-        # In these cases, assume compatibility to avoid false warnings
+        # Some types don't support isinstance
+        # In these cases, silently catch the exception
+        # and assume compatibility to avoid false warnings
         return True
 
 

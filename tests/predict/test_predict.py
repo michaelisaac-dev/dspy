@@ -876,3 +876,88 @@ def test_list_type_validation(caplog):
     # Should not have type warnings
     assert "type str but signature expects" not in caplog.text
 
+
+def test_literal_type_validation(caplog):
+    """Test type validation with Literal types."""
+    from typing import Literal
+
+    log_test_helper()
+
+    class LiteralSignature(dspy.Signature):
+        status: Literal["pending", "approved", "rejected"] = dspy.InputField()
+        priority: Literal[1, 2, 3] = dspy.InputField()
+        result: str = dspy.OutputField()
+
+    predict_instance = Predict(LiteralSignature)
+
+    # Test with correct literal values
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(status="approved", priority=2)
+
+    # Should not have type warnings for correct values
+    assert "type" not in caplog.text or "expects" not in caplog.text
+
+    # Test with incorrect literal value for string
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(status="invalid", priority=2)
+
+    assert "type str but signature expects Literal['pending', 'approved', 'rejected']" in caplog.text
+
+    # Test with incorrect literal value for int
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(status="approved", priority=5)
+
+    assert "type int but signature expects Literal[1, 2, 3]" in caplog.text
+
+
+def test_literal_union_type_validation(caplog):
+    """Test type validation with Literal types in Union."""
+    from typing import Literal
+
+    log_test_helper()
+
+    class UnionLiteralSignature(dspy.Signature):
+        mode: Literal["auto", "manual"] | None = dspy.InputField()
+        result: str = dspy.OutputField()
+
+    predict_instance = Predict(UnionLiteralSignature)
+
+    # Test with valid literal value
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(mode="auto")
+
+    assert "type" not in caplog.text or "expects" not in caplog.text
+
+    # Test with None
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(mode=None)
+
+    assert "type" not in caplog.text or "expects" not in caplog.text
+
+    # Test with invalid value
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(mode="invalid")
+
+    # Should warn about type mismatch
+    assert "signature expects" in caplog.text
+
+
+
