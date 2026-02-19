@@ -15,6 +15,7 @@ from dspy.primitives.module import Module
 from dspy.primitives.prediction import Prediction
 from dspy.signatures.signature import Signature, ensure_signature
 from dspy.utils.callback import BaseCallback
+from dspy.utils.constants import IS_TYPE_UNDEFINED
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +177,7 @@ class Predict(Module, Parameter):
                 value = kwargs[field_name]
                 expected_type: type = field_info.annotation
 
-                if value is None:
+                if value is None or field_info.json_schema_extra.get(IS_TYPE_UNDEFINED, True):
                     continue
 
                 if not _is_value_compatible_with_type(value, expected_type):

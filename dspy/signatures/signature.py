@@ -446,7 +446,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         # But this may be annoying for users, so we allow them to pass the type
         if type_ is None:
             type_ = field.annotation
-        if type_ is None:
+        else:
             type_ = str
 
         input_fields = list(cls.input_fields.items())
@@ -576,7 +576,10 @@ def make_signature(
         else:
             if not isinstance(type_field, tuple):
                 raise ValueError(f"Field values must be tuples, but received: {type_field}.")
-            type_, field = type_field
+
+            # The `type_undefined` value is used to determine if the type was originally None
+            # (i.e., not provided in the signature string).
+            type_, type_undefined, field = type_field
         # It might be better to be explicit about the type, but it currently would break
         # program of thought and teleprompters, so we just silently default to string.
         if type_ is None:
@@ -587,6 +590,7 @@ def make_signature(
             raise ValueError(f"Field types must be types, but received: {type_} of type {type(type_)}.")
         if not isinstance(field, FieldInfo):
             raise ValueError(f"Field values must be Field instances, but received: {field}.")
+        field.json_schema_extra["type_undefined"] = type_undefined
         fixed_fields[name] = (type_, field)
 
     # Default prompt when no instructions are provided
@@ -602,22 +606,22 @@ def make_signature(
     )
 
 
-def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, Field]]:
+def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, bool, type[Field]]]:
     if signature.count("->") != 1:
         raise ValueError(f"Invalid signature format: '{signature}', must contain exactly one '->'.")
 
     inputs_str, outputs_str = signature.split("->")
 
     fields = {}
-    for field_name, field_type in _parse_field_string(inputs_str, names):
-        fields[field_name] = (field_type, InputField())
-    for field_name, field_type in _parse_field_string(outputs_str, names):
-        fields[field_name] = (field_type, OutputField())
+    for field_name, field_type, type_undefined in _parse_field_string(inputs_str, names):
+        fields[field_name] = (field_type, type_undefined, InputField())
+    for field_name, field_type, type_undefined in _parse_field_string(outputs_str, names):
+        fields[field_name] = (field_type, type_undefined, OutputField())
 
     return fields
 
 
-def _parse_field_string(field_string: str, names=None) -> dict[str, str]:
+def _parse_field_string(field_string: str, names=None) -> list[tuple[str, type, bool]]:
     """Extract the field name and type from field string in the string-based Signature.
 
     It takes a string like "x: int, y: str" and returns a dictionary mapping field names to their types.
@@ -628,7 +632,8 @@ def _parse_field_string(field_string: str, names=None) -> dict[str, str]:
     args = ast.parse(f"def f({field_string}): pass").body[0].args.args
     field_names = [arg.arg for arg in args]
     types = [str if arg.annotation is None else _parse_type_node(arg.annotation, names) for arg in args]
-    return zip(field_names, types, strict=False)
+    type_undefined = [True if arg.annotation is None else False for arg in args]
+    return zip(field_names, types, type_undefined, strict=False)
 
 
 def _parse_type_node(node, names=None) -> Any:
