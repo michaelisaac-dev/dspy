@@ -622,7 +622,7 @@ def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, bool, 
     return fields
 
 
-def _parse_field_string(field_string: str, names=None) -> list[tuple[str, type, bool]]:
+def _parse_field_string(field_string: str, names=None) -> zip[tuple[str, type | str, bool]]:
     """Extract the field name and type from field string in the string-based Signature.
 
     It takes a string like "x: int, y: str" and returns a dictionary mapping field names to their types.
@@ -631,7 +631,7 @@ def _parse_field_string(field_string: str, names=None) -> list[tuple[str, type, 
     """
 
     args = ast.parse(f"def f({field_string}): pass").body[0].args.args
-    field_names = [arg.arg for arg in args]
+    field_names: list[str] = [arg.arg for arg in args]
     types = [str if arg.annotation is None else _parse_type_node(arg.annotation, names) for arg in args]
     type_undefined = [True if arg.annotation is None else False for arg in args]
     return zip(field_names, types, type_undefined, strict=False)
