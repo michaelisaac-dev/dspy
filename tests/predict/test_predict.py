@@ -1372,7 +1372,6 @@ def test_untyped_string_signature(caplog):
         # Test with incorrect type for count and name
         predict_instance(count="abc", name=123)
 
-    dspy.inspect_history()
     assert "Type mismatch" not in caplog.text
 
 
@@ -1392,8 +1391,27 @@ def test_untyped_class_signature(caplog):
     lm = DummyLM([{"result": "test output"}])
     dspy.configure(lm=lm)
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
-        # Test with incorrect type for count and name
+        # Test with "unexpected" type for count and name
         predict_instance(count="abc", name=123)
 
-    dspy.inspect_history()
+    assert "Type mismatch" not in caplog.text
+
+def test_string_to_list_signature(caplog):
+    """Test type validation with string input field type where the module gets called with a list."""
+    log_test_helper()
+
+    # Use class signature with type annotations
+    class TestSignature(dspy.Signature):
+        name: str = dspy.InputField()
+        count = dspy.InputField()
+        result = dspy.OutputField()
+    predict_instance = Predict(TestSignature)
+
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        # Test with a list of strings
+        predict_instance(name=["abc", "def", "geh"], count=123)
+
     assert "Type mismatch" not in caplog.text

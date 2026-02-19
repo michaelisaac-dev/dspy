@@ -282,6 +282,11 @@ def _is_value_compatible_with_type(value: Any, expected: type) -> bool:
     """Return True if the value matches the expected type hint."""
     from typeguard import TypeCheckError
     try:
+        # Special handle list[str] because we allow setting input type to str, however, invoking with a list thereof.
+        if expected is str and isinstance(value, list):
+            if all(isinstance(item, str) for item in value):
+                return True
+
         check_type(value, expected)
         return True
     except TypeCheckError:
