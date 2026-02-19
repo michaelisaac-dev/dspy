@@ -808,7 +808,7 @@ def test_extra_fields_warning(caplog):
 
 
 def test_warning_images(caplog):
-    """Test that extra fields not in signature generate a warning."""
+    """Test whether type mismatch for images generates a warning."""
     log_test_helper()
 
     predict_instance = Predict("question:dspy.Image -> answer")
@@ -816,14 +816,14 @@ def test_warning_images(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(question=dspy.Image("https://example.com/image1.jpg"))
 
-    assert "type" not in caplog.text or "expects" not in caplog.text
+    assert "Type mismatch" not in caplog.text
 
     caplog.clear()
 
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(question="dog_image")
 
-    assert "type str but signature expects Image" in caplog.text
+    assert "Type mismatch for field 'question': expected Image" in caplog.text
 
 def test_type_mismatch_warning(caplog):
     """Test that type mismatches in input fields generate a warning."""
@@ -842,7 +842,7 @@ def test_type_mismatch_warning(caplog):
         # Pass a string where int is expected
         predict_instance(count="not an int", name="test")
 
-    assert "type str but signature expects int" in caplog.text
+    assert "Type mismatch for field 'count': expected int" in caplog.text
 
 
 def test_correct_types_no_warning(caplog):
@@ -863,10 +863,8 @@ def test_correct_types_no_warning(caplog):
         # Pass correct types
         predict_instance(count=42, name="test")
 
-    # Check that no warnings about types or extra fields were logged
     assert "not in signature" not in caplog.text
-    # Filter out other warnings that might be present
-    assert "type" not in caplog.text or "expects" not in caplog.text
+    assert "Type mismatch" not in caplog.text
 
 
 def test_list_type_validation(caplog):
@@ -886,15 +884,14 @@ def test_list_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(items="not a list")
 
-    assert "type str but signature expects list" in caplog.text
+    assert "Type mismatch for field 'items': expected list" in caplog.text
 
     # Test with correct type
     caplog.clear()
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(items=["a", "b", "c"])
 
-    # Should not have type warnings
-    assert "type str but signature expects" not in caplog.text
+    assert "Type mismatch for field 'items'" not in caplog.text
 
 
 def test_literal_type_validation(caplog):
@@ -917,8 +914,7 @@ def test_literal_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(status="approved", priority=2)
 
-    # Should not have type warnings for correct values
-    assert "type" not in caplog.text or "expects" not in caplog.text
+    assert "Type mismatch" not in caplog.text
 
     # Test with incorrect literal value for string
     caplog.clear()
@@ -927,7 +923,7 @@ def test_literal_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(status="invalid", priority=2)
 
-    assert "type str but signature expects Literal['pending', 'approved', 'rejected']" in caplog.text
+    assert "Type mismatch for field 'status': expected Literal['pending', 'approved', 'rejected']" in caplog.text
 
     # Test with incorrect literal value for int
     caplog.clear()
@@ -936,7 +932,7 @@ def test_literal_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(status="approved", priority=5)
 
-    assert "type int but signature expects Literal[1, 2, 3]" in caplog.text
+    assert "Type mismatch for field 'priority': expected Literal[1, 2, 3]" in caplog.text
 
 
 def test_literal_union_type_validation(caplog):
@@ -958,7 +954,7 @@ def test_literal_union_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(mode="auto")
 
-    assert "type" not in caplog.text or "expects" not in caplog.text
+    assert "Type mismatch" not in caplog.text
 
     # Test with None
     caplog.clear()
@@ -967,7 +963,7 @@ def test_literal_union_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(mode=None)
 
-    assert "type" not in caplog.text or "expects" not in caplog.text
+    assert "Type mismatch" not in caplog.text
 
     # Test with invalid value
     caplog.clear()
@@ -976,7 +972,169 @@ def test_literal_union_type_validation(caplog):
     with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
         predict_instance(mode="invalid")
 
-    # Should warn about type mismatch
-    assert "signature expects" in caplog.text
+    assert "Type mismatch for field 'mode'" in caplog.text
 
+
+def test_list_string(caplog):
+    """Test passing list of strings."""
+    log_test_helper()
+
+    class TypedSignature(dspy.Signature):
+        nameList: list[str] = dspy.InputField()
+        result: str = dspy.OutputField()
+
+    predict_instance = Predict(TypedSignature)
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        # Pass list of strings
+        predict_instance(nameList=["Alice", "Bob", "Charlie"])
+
+    assert "Type mismatch" not in caplog.text
+
+    caplog.clear()
+
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        # Pass list of non strings
+        predict_instance(nameList=[1, 2, 3, None])
+
+    assert "Type mismatch for field 'nameList': expected list[str]" in caplog.text
+
+
+def test_nested_list_type_validation(caplog):
+    """Test type validation with list element types."""
+    log_test_helper()
+
+    class NestedListSignature(dspy.Signature):
+        numbers: list[int] = dspy.InputField()
+        names: list[str] = dspy.InputField()
+        result: str = dspy.OutputField()
+
+    predict_instance = Predict(NestedListSignature)
+
+    # Test with correct element types
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(numbers=[1, 2, 3], names=["alice", "bob"])
+
+    # Should not have type warnings for correct element types
+    assert "Type mismatch" not in caplog.text
+
+    # Test with incorrect element types in numbers
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(numbers=["1", "2", "3"], names=["alice", "bob"])
+
+    assert "Type mismatch for field 'numbers': expected list[int]" in caplog.text
+
+    # Test with incorrect element types in names
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(numbers=[1, 2, 3], names=[1, 2, 3])
+
+    assert "Type mismatch for field 'names': expected list[str]" in caplog.text
+
+    # Test with empty list (should be valid)
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(numbers=[], names=[])
+
+    assert "Type mismatch" not in caplog.text
+
+
+def test_nested_dict_type_validation(caplog):
+    """Test type validation with dict key and value types."""
+    log_test_helper()
+
+    class DictSignature(dspy.Signature):
+        mapping: dict[str, int] = dspy.InputField()
+        result: str = dspy.OutputField()
+
+    predict_instance = Predict(DictSignature)
+
+    # Test with correct key-value types
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(mapping={"a": 1, "b": 2, "c": 3})
+
+    assert "Type mismatch" not in caplog.text
+
+    # Test with incorrect value types
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(mapping={"a": "1", "b": "2", "c": "3"})
+
+    assert "Type mismatch for field 'mapping': expected dict[str, int]" in caplog.text
+
+    # Test with incorrect key types
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(mapping={1: 1, 2: 2, 3: 3})
+
+    assert "Type mismatch for field 'mapping': expected dict[str, int]" in caplog.text
+
+
+def test_nested_tuple_type_validation(caplog):
+    """Test type validation with tuple types."""
+    log_test_helper()
+
+    class TupleSignature(dspy.Signature):
+        fixed_tuple: tuple[str, int, bool] = dspy.InputField()
+        var_tuple: tuple[int, ...] = dspy.InputField()
+        result: str = dspy.OutputField()
+
+    predict_instance = Predict(TupleSignature)
+
+    # Test with correct tuple types
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(fixed_tuple=("hello", 42, True), var_tuple=(1, 2, 3, 4))
+
+    assert "Type mismatch" not in caplog.text
+
+    # Test with incorrect element types in fixed tuple
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(fixed_tuple=(123, 42, True), var_tuple=(1, 2, 3))
+
+    assert "Type mismatch for field 'fixed_tuple': expected tuple[str, int, bool]" in caplog.text
+
+    # Test with wrong length fixed tuple
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(fixed_tuple=("hello", 42), var_tuple=(1, 2, 3))
+
+    assert "Type mismatch for field 'fixed_tuple': expected tuple[str, int, bool]" in caplog.text
+
+    # Test with incorrect element types in variable tuple
+    caplog.clear()
+    lm = DummyLM([{"result": "test output"}])
+    dspy.configure(lm=lm)
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(fixed_tuple=("hello", 42, True), var_tuple=("a", "b", "c"))
+
+    assert "Type mismatch for field 'var_tuple': expected tuple[int, ...]" in caplog.text
 

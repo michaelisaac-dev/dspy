@@ -1,8 +1,10 @@
 import logging
 import random
+from typing import Any, Literal, get_args, get_origin
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
+from typeguard import check_type
 
 from dspy.adapters.chat_adapter import ChatAdapter
 from dspy.clients.base_lm import BaseLM
@@ -179,10 +181,11 @@ class Predict(Module, Parameter):
 
                 if not _is_value_compatible_with_type(value, expected_type):
                     logger.warning(
-                        "Input field '%s' has type %s but signature expects %s.",
+                        "Type mismatch for field '%s': expected %s based on given Signature, "
+                        "but the provided value is incompatible: %s.",
                         field_name,
-                        type(value).__name__,
                         _get_type_name(expected_type),
+                        value,
                     )
 
         if not all(k in kwargs for k in signature.input_fields):
@@ -250,7 +253,6 @@ class Predict(Module, Parameter):
 
 def _get_type_name(type_annotation) -> str:
     """Helper method to get the name for a type annotation."""
-    from typing import Literal, get_args, get_origin
 
     origin = get_origin(type_annotation)
     args = get_args(type_annotation)
@@ -268,49 +270,21 @@ def _get_type_name(type_annotation) -> str:
 
     # Types like list[str], dict[str, int], generics, etc.
     if args:
-        args_str = ", ".join(_get_type_name(arg) for arg in args)
+        # Handle Ellipsis in tuples (e.g., tuple[int, ...])
+        args_str = ", ".join("..." if arg is ... else _get_type_name(arg) for arg in args)
         origin_name = getattr(origin, "__name__", str(origin))
         return f"{origin_name}[{args_str}]"
 
     return getattr(origin, "__name__", str(origin))
 
-def _is_value_compatible_with_type(value, expected_type: type) -> bool:
-    """Check if a value is compatible with the expected type annotation."""
-    from typing import Literal, Union, get_args, get_origin
-
-    # Handle None type
-    if expected_type is type(None):
-        return value is None
-
-    origin = get_origin(expected_type)
-    args = get_args(expected_type)
-
-    # Handle Literal types
-    if origin is Literal:
-        return value in args
-
-    # Handle Union types
-    if origin is Union:
-        return any(_is_value_compatible_with_type(value, arg) for arg in args)
-
-    # Handle generic types (list[T], dict[K, V], etc.)
-    if origin is not None:
-        try:
-            return isinstance(value, origin)
-        except TypeError:
-            # Some types don't support isinstance
-            # In these cases, silently catch the exception
-            # and assume compatibility to avoid false warnings
-            return True
-
-    # Handle primitives and custom classes
+def _is_value_compatible_with_type(value: Any, expected: type) -> bool:
+    """Return True if the value matches the expected type hint."""
+    from typeguard import TypeCheckError
     try:
-        return isinstance(value, expected_type)
-    except TypeError:
-        # Some types don't support isinstance
-        # In these cases, silently catch the exception
-        # and assume compatibility to avoid false warnings
+        check_type(value, expected)
         return True
+    except TypeCheckError:
+        return False
 
 def serialize_object(obj):
     """
