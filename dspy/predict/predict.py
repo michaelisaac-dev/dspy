@@ -158,6 +158,33 @@ class Predict(Module, Parameter):
             if k not in kwargs and v.default is not PydanticUndefined:
                 kwargs[k] = v.default
 
+        # Check and warn for extra fields not in signature
+        extra_fields = [k for k in kwargs if k not in signature.input_fields]
+        if extra_fields:
+            logger.warning(
+                "Input contains fields not in signature. These fields will be ignored: %s. "
+                "Expected fields: %s.",
+                extra_fields,
+                list(signature.input_fields.keys()),
+            )
+
+        # Validate input field types match signature
+        for field_name, field_info in signature.input_fields.items():
+            if field_name in kwargs:
+                value = kwargs[field_name]
+                expected_type: type = field_info.annotation
+
+                if value is None:
+                    continue
+
+                if not _is_value_compatible_with_type(value, expected_type):
+                    logger.warning(
+                        "Input field '%s' has type %s but signature expects %s.",
+                        field_name,
+                        type(value).__name__,
+                        _get_type_name(expected_type),
+                    )
+
         if not all(k in kwargs for k in signature.input_fields):
             present = [k for k in signature.input_fields if k in kwargs]
             missing = [k for k in signature.input_fields if k not in kwargs]
@@ -221,6 +248,69 @@ class Predict(Module, Parameter):
     def __repr__(self):
         return f"{self.__class__.__name__}({self.signature})"
 
+def _get_type_name(type_annotation) -> str:
+    """Helper method to get the name for a type annotation."""
+    from typing import Literal, get_args, get_origin
+
+    origin = get_origin(type_annotation)
+    args = get_args(type_annotation)
+
+    if origin is None:
+        # Primitives like str, int, etc.
+        if hasattr(type_annotation, "__name__"):
+            return type_annotation.__name__
+        return str(type_annotation)
+
+    # Handle Literal types
+    if origin is Literal:
+        literal_values = ", ".join(repr(arg) for arg in args)
+        return f"Literal[{literal_values}]"
+
+    # Types like list[str], dict[str, int], generics, etc.
+    if args:
+        args_str = ", ".join(_get_type_name(arg) for arg in args)
+        origin_name = getattr(origin, "__name__", str(origin))
+        return f"{origin_name}[{args_str}]"
+
+    return getattr(origin, "__name__", str(origin))
+
+def _is_value_compatible_with_type(value, expected_type: type) -> bool:
+    """Check if a value is compatible with the expected type annotation."""
+    from typing import Literal, Union, get_args, get_origin
+
+    # Handle None type
+    if expected_type is type(None):
+        return value is None
+
+    origin = get_origin(expected_type)
+    args = get_args(expected_type)
+
+    # Handle Literal types
+    if origin is Literal:
+        return value in args
+
+    # Handle Union types
+    if origin is Union:
+        return any(_is_value_compatible_with_type(value, arg) for arg in args)
+
+    # Handle generic types (list[T], dict[K, V], etc.)
+    if origin is not None:
+        try:
+            return isinstance(value, origin)
+        except TypeError:
+            # Some types don't support isinstance
+            # In these cases, silently catch the exception
+            # and assume compatibility to avoid false warnings
+            return True
+
+    # Handle primitives and custom classes
+    try:
+        return isinstance(value, expected_type)
+    except TypeError:
+        # Some types don't support isinstance
+        # In these cases, silently catch the exception
+        # and assume compatibility to avoid false warnings
+        return True
 
 def serialize_object(obj):
     """
