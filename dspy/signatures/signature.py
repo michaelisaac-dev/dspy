@@ -579,8 +579,7 @@ def make_signature(
             if not isinstance(type_field, tuple):
                 raise ValueError(f"Field values must be tuples, but received: {type_field}.")
 
-            # The `type_undefined` value is used to determine if the type was originally None
-            # (i.e., not provided in the signature string).
+            # The `IS_TYPE_UNDEFINED` flag is used to determine if the type was originally not defined in the signature
             type_, type_undefined, field = type_field
             field.json_schema_extra[IS_TYPE_UNDEFINED] = type_undefined
         # It might be better to be explicit about the type, but it currently would break
