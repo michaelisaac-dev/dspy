@@ -607,7 +607,7 @@ def make_signature(
     )
 
 
-def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, bool, type[Field]]]:
+def _parse_signature(signature: str, names=None) -> dict[str, tuple[Any, bool, type[Field]]]:
     if signature.count("->") != 1:
         raise ValueError(f"Invalid signature format: '{signature}', must contain exactly one '->'.")
 
@@ -622,7 +622,7 @@ def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, bool, 
     return fields
 
 
-def _parse_field_string(field_string: str, names=None) -> zip[tuple[str, type | str, bool]]:
+def _parse_field_string(field_string: str, names=None) -> typing.Iterator[tuple[str, type, bool]]:
     """Extract the field name and type from field string in the string-based Signature.
 
     It takes a string like "x: int, y: str" and returns a dictionary mapping field names to their types.
