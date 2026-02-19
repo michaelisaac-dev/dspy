@@ -805,6 +805,24 @@ def test_extra_fields_warning(caplog):
     assert "extra_field" in caplog.text
 
 
+def test_warning_images(caplog):
+    """Test that extra fields not in signature generate a warning."""
+    log_test_helper()
+
+    predict_instance = Predict("question:dspy.Image -> answer")
+
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(question=dspy.Image("https://example.com/image1.jpg"))
+
+    assert "type" not in caplog.text or "expects" not in caplog.text
+
+    caplog.clear()
+
+    with caplog.at_level(logging.WARNING, logger="dspy.predict.predict"):
+        predict_instance(question="dog_image")
+
+    assert "type str but signature expects Image" in caplog.text
+
 def test_type_mismatch_warning(caplog):
     """Test that type mismatches in input fields generate a warning."""
     log_test_helper()
