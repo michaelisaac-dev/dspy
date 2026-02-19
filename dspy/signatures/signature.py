@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field, create_model
 from pydantic.fields import FieldInfo
 
 from dspy.signatures.field import InputField, OutputField
+from dspy.utils.constants import IS_TYPE_UNDEFINED
 
 
 def _default_instructions(cls) -> str:
@@ -165,6 +166,7 @@ class SignatureMeta(type(BaseModel)):
                 continue  # Don't add types to non-field attributes
             if not name.startswith("__") and name not in raw_annotations:
                 raw_annotations[name] = str
+                field.json_schema_extra[IS_TYPE_UNDEFINED] = True  # Mark that the type was originally undefined in the signature
         # Create ordered annotations dictionary that preserves field order
         ordered_annotations = {name: raw_annotations[name] for name in field_order if name in raw_annotations}
         # Add any remaining annotations that weren't in field_order
@@ -580,6 +582,7 @@ def make_signature(
             # The `type_undefined` value is used to determine if the type was originally None
             # (i.e., not provided in the signature string).
             type_, type_undefined, field = type_field
+            field.json_schema_extra[IS_TYPE_UNDEFINED] = type_undefined
         # It might be better to be explicit about the type, but it currently would break
         # program of thought and teleprompters, so we just silently default to string.
         if type_ is None:
@@ -590,7 +593,6 @@ def make_signature(
             raise ValueError(f"Field types must be types, but received: {type_} of type {type(type_)}.")
         if not isinstance(field, FieldInfo):
             raise ValueError(f"Field values must be Field instances, but received: {field}.")
-        field.json_schema_extra["type_undefined"] = type_undefined
         fixed_fields[name] = (type_, field)
 
     # Default prompt when no instructions are provided

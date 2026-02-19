@@ -177,7 +177,7 @@ class Predict(Module, Parameter):
                 value = kwargs[field_name]
                 expected_type: type = field_info.annotation
 
-                if value is None or field_info.json_schema_extra.get(IS_TYPE_UNDEFINED, True):
+                if value is None or field_info.json_schema_extra.get(IS_TYPE_UNDEFINED, False):
                     continue
 
                 if not _is_value_compatible_with_type(value, expected_type):
