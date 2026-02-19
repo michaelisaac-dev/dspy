@@ -23,7 +23,7 @@ import sys
 import types
 import typing
 from copy import deepcopy
-from typing import Any
+from typing import Any, Iterator
 
 from pydantic import BaseModel, Field, create_model
 from pydantic.fields import FieldInfo
@@ -622,7 +622,7 @@ def _parse_signature(signature: str, names=None) -> dict[str, tuple[Any, bool, t
     return fields
 
 
-def _parse_field_string(field_string: str, names=None) -> typing.Iterator[tuple[str, type, bool]]:
+def _parse_field_string(field_string: str, names=None) -> Iterator[tuple[str, type, bool]]:
     """Extract the field name and type from field string in the string-based Signature.
 
     It takes a string like "x: int, y: str" and returns a dictionary mapping field names to their types.
