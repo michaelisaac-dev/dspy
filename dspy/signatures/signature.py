@@ -604,7 +604,7 @@ def make_signature(
     )
 
 
-def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, type[Field]]]:
+def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, Field]]:
     if signature.count("->") != 1:
         raise ValueError(f"Invalid signature format: '{signature}', must contain exactly one '->'.")
 
