@@ -261,13 +261,13 @@ class SignatureMeta(type(BaseModel)):
 
 
 class Signature(BaseModel, metaclass=SignatureMeta):
-    ""
+    """"""
 
     # Note: Don't put a docstring here, as it will become the default instructions
-    # for any signature that doesn't define it's own instructions.
+    # for any signature that doesn't define its own instructions.
 
     @classmethod
-    def with_instructions(cls, instructions: str) -> type["Signature"]:
+    def with_instructions(cls, instructions: str) -> "Signature":
         """Return a new Signature class with identical fields and new instructions.
 
         This method does not mutate `cls`. It constructs a fresh Signature
@@ -296,7 +296,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         return Signature(cls.fields, instructions)
 
     @classmethod
-    def with_updated_fields(cls, name: str, type_: type | None = None, **kwargs: dict[str, Any]) -> type["Signature"]:
+    def with_updated_fields(cls, name: str, type_: type | None = None, **kwargs: dict[str, Any]) -> "Signature":
         """Create a new Signature class with the updated field information.
 
         Returns a new Signature class with the field, name, updated
@@ -322,7 +322,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         return Signature(fields_copy, cls.instructions)
 
     @classmethod
-    def prepend(cls, name, field, type_=None) -> type["Signature"]:
+    def prepend(cls, name, field, type_=None) -> "Signature":
         """Insert a field at index 0 of the `inputs` or `outputs` section.
 
         Args:
@@ -349,7 +349,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         return cls.insert(0, name, field, type_)
 
     @classmethod
-    def append(cls, name, field, type_=None) -> type["Signature"]:
+    def append(cls, name, field, type_=None) -> "Signature":
         """Insert a field at the end of the `inputs` or `outputs` section.
 
         Args:
@@ -376,7 +376,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         return cls.insert(-1, name, field, type_)
 
     @classmethod
-    def delete(cls, name) -> type["Signature"]:
+    def delete(cls, name) -> "Signature":
         """Return a new Signature class without the given field.
 
         If `name` is not present, the fields are unchanged (no error raised).
@@ -411,7 +411,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         return Signature(fields, cls.instructions)
 
     @classmethod
-    def insert(cls, index: int, name: str, field, type_: type | None = None) -> type["Signature"]:
+    def insert(cls, index: int, name: str, field, type_: type | None = None) -> "Signature":
         """Insert a field at a specific position among inputs or outputs.
 
         Negative indices are supported (e.g., `-1` appends). If `type_` is omitted, the field's
@@ -508,7 +508,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         return signature_copy
 
 
-def ensure_signature(signature: str | type[Signature], instructions=None) -> type[Signature]:
+def ensure_signature(signature: str | type[Signature], instructions=None) -> None | Signature | type[Signature]:
     if signature is None:
         return None
     if isinstance(signature, str):
@@ -604,7 +604,7 @@ def make_signature(
     )
 
 
-def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, Field]]:
+def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, Any]]:
     if signature.count("->") != 1:
         raise ValueError(f"Invalid signature format: '{signature}', must contain exactly one '->'.")
 
@@ -623,15 +623,15 @@ def _parse_field_string(field_string: str, names=None) -> Iterator[tuple[str, ty
     """Extract the field name and type from field string in the string-based Signature.
 
     It takes a string like "x: int, y: str" and returns a dictionary mapping field names to their types.
-    For example, "x: int, y: str" -> [("x", int), ("y", str)]. This function utitlizes the Python AST to parse the
+    For example, "x: int, y: str" -> [("x", int), ("y", str)]. This function utilizes the Python AST to parse the
     fields and types.
     """
 
     args = ast.parse(f"def f({field_string}): pass").body[0].args.args
     field_names: list[str] = [arg.arg for arg in args]
-    types = [str if arg.annotation is None else _parse_type_node(arg.annotation, names) for arg in args]
-    type_undefined = [True if arg.annotation is None else False for arg in args]
-    return zip(field_names, types, type_undefined, strict=False)
+    types_list: list[type] = [str if arg.annotation is None else _parse_type_node(arg.annotation, names) for arg in args]
+    type_undefined: list[bool] = [True if arg.annotation is None else False for arg in args]
+    return zip(field_names, types_list, type_undefined, strict=False)
 
 
 def _parse_type_node(node, names=None) -> Any:
