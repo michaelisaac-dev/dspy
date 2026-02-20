@@ -611,10 +611,10 @@ def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, Any]]:
     inputs_str, outputs_str = signature.split("->")
 
     fields = {}
-    for field_name, field_type, type_undefined in _parse_field_string(inputs_str, names):
-        fields[field_name] = (field_type, InputField(IS_TYPE_UNDEFINED= type_undefined))
-    for field_name, field_type, type_undefined in _parse_field_string(outputs_str, names):
-        fields[field_name] = (field_type, OutputField(IS_TYPE_UNDEFINED= type_undefined))
+    for field_name, field_type, is_type_undefined in _parse_field_string(inputs_str, names):
+        fields[field_name] = (field_type, InputField(IS_TYPE_UNDEFINED= is_type_undefined))
+    for field_name, field_type, _ in _parse_field_string(outputs_str, names):
+        fields[field_name] = (field_type, OutputField())
 
     return fields
 
@@ -630,8 +630,8 @@ def _parse_field_string(field_string: str, names=None) -> Iterator[tuple[str, ty
     args = ast.parse(f"def f({field_string}): pass").body[0].args.args
     field_names: list[str] = [arg.arg for arg in args]
     types_list: list[type] = [str if arg.annotation is None else _parse_type_node(arg.annotation, names) for arg in args]
-    type_undefined: list[bool] = [True if arg.annotation is None else False for arg in args]
-    return zip(field_names, types_list, type_undefined, strict=False)
+    is_type_undefined: list[bool] = [True if arg.annotation is None else False for arg in args]
+    return zip(field_names, types_list, is_type_undefined, strict=False)
 
 
 def _parse_type_node(node, names=None) -> Any:
