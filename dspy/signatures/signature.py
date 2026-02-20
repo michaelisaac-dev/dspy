@@ -448,7 +448,7 @@ class Signature(BaseModel, metaclass=SignatureMeta):
         # But this may be annoying for users, so we allow them to pass the type
         if type_ is None:
             type_ = field.annotation
-        else:
+        if type_ is None:
             type_ = str
 
         input_fields = list(cls.input_fields.items())
@@ -578,10 +578,7 @@ def make_signature(
         else:
             if not isinstance(type_field, tuple):
                 raise ValueError(f"Field values must be tuples, but received: {type_field}.")
-
-            # The `IS_TYPE_UNDEFINED` flag is used to determine if the type was originally not defined in the signature
-            type_, type_undefined, field = type_field
-            field.json_schema_extra[IS_TYPE_UNDEFINED] = type_undefined
+            type_, field = type_field
         # It might be better to be explicit about the type, but it currently would break
         # program of thought and teleprompters, so we just silently default to string.
         if type_ is None:
@@ -607,7 +604,7 @@ def make_signature(
     )
 
 
-def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, bool, type[Field]]]:
+def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, type[Field]]]:
     if signature.count("->") != 1:
         raise ValueError(f"Invalid signature format: '{signature}', must contain exactly one '->'.")
 
@@ -615,9 +612,9 @@ def _parse_signature(signature: str, names=None) -> dict[str, tuple[type, bool, 
 
     fields = {}
     for field_name, field_type, type_undefined in _parse_field_string(inputs_str, names):
-        fields[field_name] = (field_type, type_undefined, InputField())
+        fields[field_name] = (field_type, InputField(IS_TYPE_UNDEFINED= type_undefined))
     for field_name, field_type, type_undefined in _parse_field_string(outputs_str, names):
-        fields[field_name] = (field_type, type_undefined, OutputField())
+        fields[field_name] = (field_type, OutputField(IS_TYPE_UNDEFINED= type_undefined))
 
     return fields
 
