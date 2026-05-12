@@ -10,6 +10,7 @@ from dspy.predict.program_of_thought import ProgramOfThought
 from dspy.predict.react import ReAct, Tool
 from dspy.predict.refine import Refine
 from dspy.predict.rlm import RLM
+from dspy.predict.typed_module import TypedModule
 
 __all__ = [
     "majority",
@@ -25,4 +26,5 @@ __all__ = [
     "RLM",
     "Tool",
     "Parallel",
+    "TypedModule",
 ]
