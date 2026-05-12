@@ -558,25 +558,118 @@ def test_cloudpickle_round_trip_preserves_typed_module():
     assert [n for n, _ in restored.named_predictors()] == ["module"]
 
 
-def test_forward_can_be_monkeypatched_to_return_tuple():
-    """GEPA's `bootstrap_trace` wraps `program.forward` to return
-    `(prediction, trace)`. TypedModule's cast must still happen via the
-    original forward, and the outer tuple must propagate cleanly."""
-    from types import MethodType
+def test_bootstrap_trace_with_typed_module_inside_user_program():
+    """GEPA optimizers call `bootstrap_trace_data`, which wraps the
+    outer program's `forward` to return `(prediction, trace)`. When a
+    TypedModule is *nested* inside the user program, the wrapper's cast
+    runs normally and the trace captures the inner predictor's call."""
+    from dspy.teleprompt.bootstrap_trace import bootstrap_trace_data
 
-    _set_lm([{"answer": "Paris"}])
-    typed = TypedModule(dspy.Predict("q -> answer"), output_adapter=AnswerOnly)
-    original_forward = object.__getattribute__(typed, "forward")
+    class QA(dspy.Module):
+        def __init__(self):
+            super().__init__()
+            self.qa = TypedModule(dspy.Predict("question -> answer"), output_adapter=AnswerOnly)
 
-    def patched(self, **kwargs):
-        return original_forward(**kwargs), "fake_trace"
+        def forward(self, question):
+            typed = self.qa(question=question)
+            return dspy.Prediction(answer=typed.answer)
 
-    typed.forward = MethodType(patched, typed)
+    dspy.configure(lm=DummyLM([{"answer": "4"}, {"answer": "6"}, {"answer": "8"}] * 4))
 
-    result = typed(q="?")
-    assert isinstance(result, tuple)
-    assert isinstance(result[0], AnswerOnly)
-    assert result[1] == "fake_trace"
+    trainset = [
+        dspy.Example(question="2+2?", answer="4").with_inputs("question"),
+        dspy.Example(question="3+3?", answer="6").with_inputs("question"),
+        dspy.Example(question="4+4?", answer="8").with_inputs("question"),
+    ]
+
+    def metric(ex, pred, trace=None):
+        return ex.answer == pred.answer
+
+    results = bootstrap_trace_data(
+        program=QA(),
+        dataset=trainset,
+        metric=metric,
+        num_threads=1,
+        raise_on_error=True,
+    )
+
+    assert len(results) == 3
+    for entry, example in zip(results, trainset):
+        assert entry["example"] is example
+        # Outer program returns a Prediction; the inner TypedModule's cast
+        # already happened and was used to build that Prediction.
+        assert isinstance(entry["prediction"], Prediction)
+        assert entry["prediction"].answer == example.answer
+        assert entry["score"] is True
+        # Each example invoked the inner Predict exactly once.
+        assert len(entry["trace"]) == 1
+        predictor, inputs, output = entry["trace"][0]
+        assert isinstance(predictor, dspy.Predict)
+        assert inputs == {"question": example.question}
+        assert isinstance(output, Prediction)
+
+
+def test_bootstrap_trace_with_typed_module_as_top_level_program():
+    """TypedModule itself is the program, so `bootstrap_trace`
+    patches `TypedModule.forward` directly. The cast still happens through
+    the saved `original_forward`, and the recorded prediction is the
+    typed object (not a `dspy.Prediction`)."""
+    from dspy.teleprompt.bootstrap_trace import bootstrap_trace_data
+
+    dspy.configure(lm=DummyLM([{"answer": "Paris"}, {"answer": "Berlin"}] * 3))
+
+    typed = TypedModule(dspy.Predict("question -> answer"), output_adapter=AnswerOnly)
+
+    trainset = [
+        dspy.Example(question="France?", answer="Paris").with_inputs("question"),
+        dspy.Example(question="Germany?", answer="Berlin").with_inputs("question"),
+    ]
+
+    def metric(ex, pred, trace=None):
+        # `pred` is the typed `AnswerOnly` — the typed cast ran inside the
+        # wrapped `original_forward` before the patched forward returned.
+        assert isinstance(pred, AnswerOnly)
+        return ex.answer == pred.answer
+
+    results = bootstrap_trace_data(
+        program=typed,
+        dataset=trainset,
+        metric=metric,
+        num_threads=1,
+        raise_on_error=True,
+    )
+
+    assert len(results) == 2
+    for entry, example in zip(results, trainset):
+        assert isinstance(entry["prediction"], AnswerOnly)
+        assert entry["prediction"].answer == example.answer
+        assert entry["score"] is True
+        assert len(entry["trace"]) == 1
+
+
+def test_typed_module_forward_restored_after_bootstrap_trace():
+    """`bootstrap_trace_data` patches `forward` and is supposed to restore
+    it in a `finally` block. Verify a plain call after `bootstrap_trace_data`
+    returns the typed object again (i.e. forward was not left wrapped)."""
+    from dspy.teleprompt.bootstrap_trace import bootstrap_trace_data
+
+    dspy.configure(lm=DummyLM([{"answer": "x"}] * 4))
+
+    typed = TypedModule(dspy.Predict("question -> answer"), output_adapter=AnswerOnly)
+    trainset = [dspy.Example(question="?", answer="x").with_inputs("question")]
+
+    bootstrap_trace_data(
+        program=typed,
+        dataset=trainset,
+        metric=lambda ex, pred, trace=None: True,
+        num_threads=1,
+        raise_on_error=True,
+    )
+
+    result = typed(question="?")
+    assert isinstance(result, AnswerOnly)
+    assert not isinstance(result, tuple)
+    assert result.answer == "x"
 
 
 def test_callable_adapter_returning_none_raises():
