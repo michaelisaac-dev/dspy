@@ -9,7 +9,8 @@ Flow:
      GEPA optimizes its *code* (``module_src``) — decomposing the
      task into focused predictors / plain Python.
   4. Benchmark the optimized program on the same test split.
-  5. Plot baseline-vs-optimized accuracy to `banking77_improvement.png`.
+  5. Plot baseline-vs-optimized classification metrics (accuracy + macro precision/recall/F1) and
+     avg LLM calls/example to `banking77_improvement.png`.
 
 The GEPA metric's *feedback* is the prompt GEPA feeds its code proposer. We deliberately
 make that feedback adversarial — it forces the model to interrogate its own logic and
@@ -23,8 +24,10 @@ optional `datasets`/`matplotlib` deps. Dataset: https://huggingface.co/datasets/
 from __future__ import annotations
 
 import os
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 from dotenv import load_dotenv
@@ -58,9 +61,11 @@ _reflect_default = "anthropic/claude-opus-4-7"
 EXEC_LM = dspy.LM(os.getenv("BANKING_EXEC_LM", _exec_default), max_tokens=2000)
 REFLECTION_LM = dspy.LM(os.getenv("BANKING_REFLECTION_LM", _reflect_default), temperature=1.0, max_tokens=8000)
 
-# A larger test split than the train/val budget: BANKING77 is genuinely hard, so n=40 gives a
-# stable accuracy estimate with headroom (a tiny n=5 split too easily lands on a fluke 100%).
-N_TRAIN, N_VAL, N_TEST = 20, 10, 40
+# Small train/val samples drive GEPA (its budget is MAX_METRIC_CALLS, so val must stay small); the
+# test split is the ENTIRE BANKING77 test set (~3080 examples, ~40 per intent) for the most complete
+# accuracy/F1 estimate. The test set is class-balanced across the 77 intents, so macro and micro
+# averaging nearly coincide (and micro-F1 == accuracy for single-label multiclass).
+N_TRAIN, N_VAL = 20, 10
 MAX_METRIC_CALLS = 60
 EVAL_THREADS = 8
 
@@ -104,7 +109,7 @@ def _load_splits():
     pool = train_df.sample(frac=1, random_state=0).reset_index(drop=True)  # disjoint train/val
     train = to_examples(pool.iloc[:N_TRAIN])
     val = to_examples(pool.iloc[N_TRAIN : N_TRAIN + N_VAL])
-    test = to_examples(test_df.sample(N_TEST, random_state=0))
+    test = to_examples(test_df)  # the entire BANKING77 test set
     return labels, train, val, test
 
 
@@ -119,28 +124,67 @@ def _build_signature(labels: list[str]):
     return dspy.Signature("text: str -> intent: str", instructions)
 
 
-def _evaluate(program: dspy.Module, dataset: list) -> tuple[float, float]:
-    """Return (test accuracy, avg traced LLM calls/example).
+class EvalResult(NamedTuple):
+    """Headline metrics for one program on one dataset (77-way intent classification)."""
 
-    The call count shows *how* the answer was reached: the Predict baseline makes one traced
-    call per example, whereas a GEPA-decomposed program may settle some cases in plain Python
-    (zero calls) or route through focused predictors. Accuracy is the headline; calls show the
-    mechanism.
+    accuracy: float          # fraction correct == micro-F1 for single-label multiclass
+    macro_precision: float   # mean per-intent precision (all 77 intents weighted equally)
+    macro_recall: float      # mean per-intent recall
+    macro_f1: float          # mean per-intent F1 — the balanced headline across intents
+    avg_calls: float         # avg traced LLM calls / example — the decomposition (cost) win
+
+
+def _evaluate(program: dspy.Module, dataset: list) -> EvalResult:
+    """Return accuracy + macro-averaged precision/recall/F1 and avg LLM calls/example.
+
+    BANKING77 is 77-way single-label classification, so precision/recall/F1 are **macro-averaged**
+    (computed per intent, then unweighted mean). Macro weighs all 77 intents equally, so weakness on
+    rarer or easily-confused intents shows up instead of being masked by the common ones — micro-
+    averaged F1 would just equal accuracy and add nothing. The call count shows *how* the answer was
+    reached: the RLM baseline spends several traced calls per example; a GEPA-decomposed program
+    settles cases in fewer focused calls (or plain Python at zero).
     """
     def run_one(ex):
         try:
             with dspy.context(lm=EXEC_LM, trace=[]):
                 pred = program(**ex.inputs())
                 n_calls = len(dspy.settings.trace or [])
-            return (_predicted(pred) == _norm(ex.intent), n_calls)
+            return _predicted(pred), _norm(ex.intent), n_calls
         except Exception:
-            return (False, 0)
+            return "", _norm(ex.intent), 0  # unreadable prediction counts as wrong (empty label)
 
     with ThreadPoolExecutor(max_workers=EVAL_THREADS) as pool:
         results = list(pool.map(run_one, dataset))
-    accuracy = sum(hit for hit, _ in results) / len(dataset)
-    avg_calls = sum(n for _, n in results) / len(dataset)
-    return accuracy, avg_calls
+    n = len(dataset) or 1
+    correct = sum(1 for pred, gold, _ in results if pred == gold)
+    avg_calls = sum(c for _, _, c in results) / n
+
+    # Per-intent confusion counts in one pass, then macro-average over the true intents.
+    tp: dict[str, int] = defaultdict(int)
+    fp: dict[str, int] = defaultdict(int)
+    fn: dict[str, int] = defaultdict(int)
+    for pred, gold, _ in results:
+        if pred == gold:
+            tp[gold] += 1
+        else:
+            fn[gold] += 1
+            fp[pred] += 1  # pred may be "" on error — a bucket we never average over
+    true_classes = {gold for _, gold, _ in results}
+    precisions, recalls, f1s = [], [], []
+    for c in true_classes:
+        p = tp[c] / (tp[c] + fp[c]) if (tp[c] + fp[c]) else 0.0
+        r = tp[c] / (tp[c] + fn[c]) if (tp[c] + fn[c]) else 0.0
+        precisions.append(p)
+        recalls.append(r)
+        f1s.append(2 * p * r / (p + r) if (p + r) else 0.0)
+    k = len(true_classes) or 1
+    return EvalResult(
+        accuracy=correct / n,
+        macro_precision=sum(precisions) / k,
+        macro_recall=sum(recalls) / k,
+        macro_f1=sum(f1s) / k,
+        avg_calls=avg_calls,
+    )
 
 
 def gepa_metric(gold, pred, trace=None, pred_name=None, pred_trace=None, program_trace=None) -> ScoreWithFeedback:
@@ -200,8 +244,11 @@ def test_flex_banking77_showcase() -> None:
     _showcase(program, "baseline (un-optimized flex)")
 
     # 2. Benchmark the baseline.
-    baseline_acc, baseline_calls = _evaluate(program, test)
-    print(f"[baseline / flex-RLM] test accuracy = {baseline_acc:.1%}, avg LLM calls/example = {baseline_calls:.1f}")
+    base = _evaluate(program, test)
+    print(
+        f"[baseline / flex-RLM] acc={base.accuracy:.1%} macro-P={base.macro_precision:.2f} "
+        f"macro-R={base.macro_recall:.2f} macro-F1={base.macro_f1:.2f} calls/ex={base.avg_calls:.1f}"
+    )
 
     # 3. Optimize the module's CODE with GEPA (challenging feedback drives the reflection).
     optimized = dspy.GEPA(
@@ -214,12 +261,16 @@ def test_flex_banking77_showcase() -> None:
     ).compile(program, trainset=train, valset=val)
 
     # 4. Benchmark the optimized program on the same test split.
-    optimized_acc, optimized_calls = _evaluate(optimized, test)
+    opt = _evaluate(optimized, test)
     code_changed = optimized.module_src != baseline_src
-    print(f"[optimized / GEPA]    test accuracy = {optimized_acc:.1%}, avg LLM calls/example = {optimized_calls:.1f}")
     print(
-        f"improvement: {optimized_acc - baseline_acc:+.1%} accuracy, "
-        f"{optimized_calls - baseline_calls:+.1f} LLM calls/example | GEPA changed the code: {code_changed}"
+        f"[optimized / GEPA]    acc={opt.accuracy:.1%} macro-P={opt.macro_precision:.2f} "
+        f"macro-R={opt.macro_recall:.2f} macro-F1={opt.macro_f1:.2f} calls/ex={opt.avg_calls:.1f}"
+    )
+    print(
+        f"improvement: {opt.accuracy - base.accuracy:+.1%} accuracy, "
+        f"{opt.macro_f1 - base.macro_f1:+.2f} macro-F1, "
+        f"{opt.avg_calls - base.avg_calls:+.1f} LLM calls/example | GEPA changed the code: {code_changed}"
     )
     detailed = getattr(optimized, "detailed_results", None)
     if detailed is not None:
@@ -234,25 +285,41 @@ def test_flex_banking77_showcase() -> None:
     assert reloaded.module_src == optimized.module_src
     print(f"saved + reloaded optimized program -> {SAVE_PATH}")
 
-    # 5. Plot the before/after. Two panels: accuracy is the headline (GEPA holds it), while
-    # avg LLM calls/example shows the decomposition win (the single Predict call -> focused code).
-    labels_xy = ["baseline\n(flex / Predict)", "optimized\n(GEPA code)"]
+    # 5. Plot the before/after. Panel 1: the classification metrics that validate a 77-way
+    # classifier — accuracy plus macro-averaged precision/recall/F1 (all 77 intents weighted
+    # equally, so weakness on rare/confusable intents shows). Panel 2: avg LLM calls/example, the
+    # decomposition win (the multi-call RLM baseline -> focused code).
     colors = ["#9aa0a6", "#1a73e8"]
-    fig, (ax_acc, ax_calls) = plt.subplots(1, 2, figsize=(8, 4))
+    fig, (ax_cls, ax_calls) = plt.subplots(1, 2, figsize=(11, 4.5))
 
-    acc_bars = ax_acc.bar(labels_xy, [baseline_acc, optimized_acc], color=colors)
-    ax_acc.set_ylabel("test accuracy")
-    ax_acc.set_ylim(0, 1)
-    ax_acc.set_title("Accuracy (held)")
-    for bar, acc in zip(acc_bars, [baseline_acc, optimized_acc], strict=True):
-        ax_acc.text(bar.get_x() + bar.get_width() / 2, acc + 0.02, f"{acc:.1%}", ha="center", va="bottom")
+    # Grouped bars: one group per metric, baseline vs optimized side by side.
+    metric_names = ["Accuracy", "Macro-P", "Macro-R", "Macro-F1"]
+    base_vals = [base.accuracy, base.macro_precision, base.macro_recall, base.macro_f1]
+    opt_vals = [opt.accuracy, opt.macro_precision, opt.macro_recall, opt.macro_f1]
+    xpos = list(range(len(metric_names)))
+    width = 0.38
+    b_bars = ax_cls.bar([x - width / 2 for x in xpos], base_vals, width, label="baseline", color=colors[0])
+    o_bars = ax_cls.bar([x + width / 2 for x in xpos], opt_vals, width, label="optimized", color=colors[1])
+    ax_cls.set_xticks(xpos)
+    ax_cls.set_xticklabels(metric_names)
+    ax_cls.set_ylabel("score (0–1)")
+    ax_cls.set_ylim(0, 1.15)  # headroom for the on-bar labels near 1.0
+    ax_cls.set_title("Classification metrics (macro-avg over 77 intents)")
+    ax_cls.legend(loc="lower right", fontsize=8)
+    for bars, vals in ((b_bars, base_vals), (o_bars, opt_vals)):
+        for bar, v in zip(bars, vals, strict=True):
+            ax_cls.text(
+                bar.get_x() + bar.get_width() / 2, v + 0.02, f"{v:.2f}",
+                ha="center", va="bottom", fontsize=7,
+            )
 
-    call_bars = ax_calls.bar(labels_xy, [baseline_calls, optimized_calls], color=colors)
+    labels_xy = ["baseline\n(flex / RLM)", "optimized\n(GEPA code)"]
+    call_bars = ax_calls.bar(labels_xy, [base.avg_calls, opt.avg_calls], color=colors)
     ax_calls.set_ylabel("avg LLM calls / example")
-    ax_calls.set_ylim(0, max(baseline_calls, optimized_calls, 1) * 1.2)
+    ax_calls.set_ylim(0, max(base.avg_calls, opt.avg_calls, 1) * 1.2)
     ax_calls.set_title("LLM calls (lower = more deterministic)")
-    for bar, n in zip(call_bars, [baseline_calls, optimized_calls], strict=True):
-        ax_calls.text(bar.get_x() + bar.get_width() / 2, n, f"{n:.1f}", ha="center", va="bottom")
+    for bar, nc in zip(call_bars, [base.avg_calls, opt.avg_calls], strict=True):
+        ax_calls.text(bar.get_x() + bar.get_width() / 2, nc, f"{nc:.1f}", ha="center", va="bottom")
 
     fig.suptitle(f"BANKING77 intent classification (n={len(test)})")
     fig.tight_layout()
@@ -264,7 +331,7 @@ def test_flex_banking77_showcase() -> None:
     # (Whether GEPA changes the code / improves accuracy depends on the live models and
     # budget, so it's reported and plotted rather than hard-asserted.)
     assert PLOT_PATH.exists()
-    assert 0.0 <= baseline_acc <= 1.0 and 0.0 <= optimized_acc <= 1.0
+    assert 0.0 <= base.accuracy <= 1.0 and 0.0 <= opt.accuracy <= 1.0
     assert optimized.module_src is not None
 
 
