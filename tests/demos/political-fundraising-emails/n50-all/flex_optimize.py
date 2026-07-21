@@ -371,7 +371,7 @@ def test_flex_political() -> None:
     ax_calls.set_ylim(0, max(base.avg_calls, opt.avg_calls, 1) * 1.2)
     ax_calls.set_title("LLM calls (lower = more deterministic)")
     for bar, n in zip(call_bars, [base.avg_calls, opt.avg_calls], strict=True):
-        ax_calls.text(bar.get_x() + bar.get_width() / 2, n, f"{n:.1f}", ha="center", va="bottom")
+        ax_calls.text(bar.get_x() + bar.get_width() / 2, n, f"{n:.2f}", ha="center", va="bottom")
 
     fig.suptitle(f"Political email committee attribution (n={len(test)})")
     fig.tight_layout()
