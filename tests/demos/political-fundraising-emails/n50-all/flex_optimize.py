@@ -30,8 +30,8 @@ DEMO_DIR = Path(__file__).parent
 DATA_DIR = DEMO_DIR.parent / "eval_data"
 TRAIN_PATH = DATA_DIR / "train.jsonl"
 TEST_PATH = DATA_DIR / "val.jsonl"  # held out — never seen by GEPA
-SAVE_PATH = DEMO_DIR / "committee_flex_1.json"
-PLOT_PATH = DEMO_DIR / "committee_improvement_1.png"
+SAVE_PATH = DEMO_DIR / "committee_flex.json"
+PLOT_PATH = DEMO_DIR / "committee_improvement.png"
 
 EXEC_LM = dspy.LM("anthropic/claude-opus-4-7")
 STRONG_LM = dspy.LM("anthropic/claude-opus-4-8")
@@ -45,7 +45,7 @@ dspy.configure(lm=EXEC_LM)
 # text. A bigger val pool makes candidate selection less noisy (a lucky 1-of-10 run won't win).
 N_VAL = 20  # held out of train.jsonl for candidate selection; the rest becomes the train pool
 N_TEST = 50  # all of val.jsonl
-MAX_METRIC_CALLS = 150  # room for several code-proposal rounds to converge toward the recoverable ceiling
+MAX_METRIC_CALLS = 250  # room for several code-proposal rounds to converge toward the recoverable ceiling
 REFLECTION_MINIBATCH = 4
 EVAL_THREADS = 8
 
