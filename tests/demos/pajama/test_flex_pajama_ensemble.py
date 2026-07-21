@@ -70,7 +70,7 @@ N_TRAIN = int(os.getenv("PAJAMA_N_TRAIN", "32"))  # even; bigger train feeds bag
 N_VAL = int(os.getenv("PAJAMA_N_VAL", "20"))  # even; more val -> steadier weights, but drives per-judge cost
 N_TEST = int(os.getenv("PAJAMA_N_TEST", "50"))  # even; less headline noise
 BAG_FRAC = float(os.getenv("PAJAMA_BAG_FRAC", "0.7"))  # each judge trains on a different random slice of train
-PER_JUDGE_BUDGET = 60  # GEPA budget per judge; must exceed one val-set eval (N_VAL) with room for
+PER_JUDGE_BUDGET = 80  # GEPA budget per judge; must exceed one val-set eval (N_VAL) with room for
 # several reflection rounds — too low and GEPA spends it all scoring the seed and never proposes code.
 REFLECTION_MINIBATCH = 4
 EVAL_THREADS = 8

@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import random
 import re
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 from dotenv import load_dotenv
@@ -25,14 +27,14 @@ mpl.use("Agg")  # headless
 import matplotlib.pyplot as plt  # noqa: E402
 
 DEMO_DIR = Path(__file__).parent
-DATA_DIR = DEMO_DIR / "eval_data"
+DATA_DIR = DEMO_DIR.parent / "eval_data"
 TRAIN_PATH = DATA_DIR / "train.jsonl"
 TEST_PATH = DATA_DIR / "val.jsonl"  # held out — never seen by GEPA
-SAVE_PATH = DEMO_DIR / "committee_flex.json"
-PLOT_PATH = DEMO_DIR / "committee_improvement.png"
+SAVE_PATH = DEMO_DIR / "committee_flex_1.json"
+PLOT_PATH = DEMO_DIR / "committee_improvement_1.png"
 
-EXEC_LM = dspy.LM("anthropic/claude-opus-4-7", max_tokens=2000)
-STRONG_LM = dspy.LM("anthropic/claude-opus-4-8", max_tokens=8000)
+EXEC_LM = dspy.LM("anthropic/claude-opus-4-7")
+STRONG_LM = dspy.LM("anthropic/claude-opus-4-8")
 dspy.configure(lm=EXEC_LM)
 
 # GEPA sees only train.jsonl (split into a train pool it minibatches over + a val pool it scores
@@ -43,7 +45,7 @@ dspy.configure(lm=EXEC_LM)
 # text. A bigger val pool makes candidate selection less noisy (a lucky 1-of-10 run won't win).
 N_VAL = 20  # held out of train.jsonl for candidate selection; the rest becomes the train pool
 N_TEST = 50  # all of val.jsonl
-MAX_METRIC_CALLS = 100  # room for several code-proposal rounds to converge toward the recoverable ceiling
+MAX_METRIC_CALLS = 150  # room for several code-proposal rounds to converge toward the recoverable ceiling
 REFLECTION_MINIBATCH = 4
 EVAL_THREADS = 8
 
@@ -182,13 +184,32 @@ def metric(gold, pred, trace=None, pred_name=None, pred_trace=None, program_trac
     return ScoreWithFeedback(score=score, feedback=fb)
 
 
-def _evaluate(program: dspy.Module, dataset: list) -> tuple[float, float, float]:
-    """Return (mean metric score, accuracy, avg LLM calls/example).
+class EvalResult(NamedTuple):
+    """Headline metrics for one program on one dataset (committee attribution)."""
 
-    The headline number is the metric score GEPA optimizes — accuracy minus the 0.15-per-call
-    penalty — not raw accuracy. The un-optimized Predict baseline reads every email with one
-    traced LLM call, so its score is capped below its accuracy. GEPA's win is settling the clear
-    cases (a disclaimer is present) in deterministic Python at 0 calls.
+    score: float            # mean metric score = accuracy − 0.20·(LLM calls); GEPA's objective
+    accuracy: float         # fuzzy-match correctness rate (via _match); the headline
+    macro_precision: float  # mean per-committee precision (all committees weighted equally)
+    macro_recall: float     # mean per-committee recall (== per-committee accuracy)
+    macro_f1: float         # mean per-committee F1
+    avg_calls: float        # avg LLM calls / example — the decomposition (cost) win
+
+
+def _evaluate(program: dspy.Module, dataset: list) -> EvalResult:
+    """Return the metric score plus accuracy and macro-averaged precision/recall/F1 and avg calls.
+
+    Score is the number GEPA optimizes — accuracy minus the 0.20-per-call penalty — not raw
+    accuracy; the Predict baseline reads every email with one traced call, so its score is capped
+    below its accuracy, and GEPA's win is settling clear cases in deterministic Python at 0 calls.
+
+    This is many-way attribution (one committee per email), so precision/recall/F1 are
+    **macro-averaged** over committees — computed per committee, then unweighted mean, weighing every
+    committee equally rather than letting the few repeated ones dominate. Committees are matched
+    *fuzzily* (`_match` tolerates parser/punctuation/suffix noise), so each prediction is canonicalized
+    to the committee it matches: its own gold when correct, else the first other known committee it
+    matches, else its own (wrong) bucket. NB: the test set is singleton-heavy (most committees appear
+    once), so macro-recall tracks accuracy closely; the metrics diverge on the repeated committees and
+    on wrong-committee confusions (which cost precision).
     """
 
     def run_one(ex):
@@ -197,18 +218,51 @@ def _evaluate(program: dspy.Module, dataset: list) -> tuple[float, float, float]
                 pred = program(**ex.inputs())
                 trace = list(dspy.settings.trace or [])
             score = float(metric(ex, pred, trace=trace).score)
-            ok = _match(_pred_committee(pred), ex.committee)
-            return score, int(ok), len(trace)
+            return score, _pred_committee(pred), ex.committee, len(trace)
         except Exception:
-            return 0.0, 0, 0
+            return 0.0, "", ex.committee, 0
 
     with ThreadPoolExecutor(max_workers=EVAL_THREADS) as pool:
         results = list(pool.map(run_one, dataset))
-    n = len(dataset)
-    total_score = sum(s for s, _, _ in results)
-    correct = sum(ok for _, ok, _ in results)
-    calls = sum(c for _, _, c in results)
-    return total_score / n, correct / n, calls / n
+    n = len(dataset) or 1
+    total_score = sum(s for s, _, _, _ in results)
+    calls = sum(c for _, _, _, c in results)
+    correct = sum(1 for _, pred, gold, _ in results if _match(pred, gold))
+
+    # Macro precision/recall/F1 over committee classes. Because matching is fuzzy, canonicalize each
+    # prediction to the committee it matches before building the confusion matrix.
+    gold_variants = sorted({gold for _, _, gold, _ in results if gold}, key=_norm)
+    tp: dict[str, int] = defaultdict(int)
+    fp: dict[str, int] = defaultdict(int)
+    fn: dict[str, int] = defaultdict(int)
+    for _, pred, gold, _ in results:
+        gold_c = _norm(gold)
+        if _match(pred, gold):
+            pred_c = gold_c
+        else:
+            pred_c = next((_norm(g) for g in gold_variants if _match(pred, g)), _norm(pred))
+        if pred_c == gold_c:
+            tp[gold_c] += 1
+        else:
+            fn[gold_c] += 1
+            fp[pred_c] += 1  # pred_c may be "" (empty/error) — a bucket we never average over
+    true_classes = {_norm(gold) for _, _, gold, _ in results}
+    precisions, recalls, f1s = [], [], []
+    for c in true_classes:
+        p = tp[c] / (tp[c] + fp[c]) if (tp[c] + fp[c]) else 0.0
+        r = tp[c] / (tp[c] + fn[c]) if (tp[c] + fn[c]) else 0.0
+        precisions.append(p)
+        recalls.append(r)
+        f1s.append(2 * p * r / (p + r) if (p + r) else 0.0)
+    k = len(true_classes) or 1
+    return EvalResult(
+        score=total_score / n,
+        accuracy=correct / n,
+        macro_precision=sum(precisions) / k,
+        macro_recall=sum(recalls) / k,
+        macro_f1=sum(f1s) / k,
+        avg_calls=calls / n,
+    )
 
 
 def _showcase(program: dspy.Module, label: str) -> None:
@@ -237,10 +291,11 @@ def test_flex_political() -> None:
     assert "dspy.Predict(" in base_src
     _showcase(program, "baseline (un-optimized flex)")
 
-    base_score, base_acc, base_calls = _evaluate(program, test)
+    base = _evaluate(program, test)
     print(
-        f"[baseline] score={base_score:.2f} "
-        f"(accuracy={base_acc:.2f}, avg LLM calls/example={base_calls:.2f})"
+        f"[baseline] score={base.score:.2f} acc={base.accuracy:.2f} "
+        f"macro-P={base.macro_precision:.2f} macro-R={base.macro_recall:.2f} "
+        f"macro-F1={base.macro_f1:.2f} calls/ex={base.avg_calls:.2f}"
     )
 
     optimized = dspy.GEPA(
@@ -256,12 +311,16 @@ def test_flex_political() -> None:
     _showcase(optimized, "optimized by GEPA")
     print(f"GEPA changed the code: {optimized.module_src != program.module_src}")
 
-    opt_score, opt_acc, opt_calls = _evaluate(optimized, test)
+    opt = _evaluate(optimized, test)
     print(
-        f"[optimized] score={opt_score:.2f} "
-        f"(accuracy={opt_acc:.2f}, avg LLM calls/example={opt_calls:.2f})"
+        f"[optimized] score={opt.score:.2f} acc={opt.accuracy:.2f} "
+        f"macro-P={opt.macro_precision:.2f} macro-R={opt.macro_recall:.2f} "
+        f"macro-F1={opt.macro_f1:.2f} calls/ex={opt.avg_calls:.2f}"
     )
-    print(f"score improvement: {opt_score - base_score:+.2f}")
+    print(
+        f"score improvement: {opt.score - base.score:+.2f}  |  "
+        f"macro-F1 improvement: {opt.macro_f1 - base.macro_f1:+.2f}"
+    )
 
     # Persist with the standard Module.save/load (code round-trips).
     optimized.save(str(SAVE_PATH))
@@ -270,32 +329,48 @@ def test_flex_political() -> None:
     assert reloaded.module_src == optimized.module_src
     print(f"saved + reloaded optimized program -> {SAVE_PATH}")
 
-    # Before/after plot (a la conflation), one panel per metric. Score is what GEPA optimizes
-    # (accuracy − 0.15/LLM-call); accuracy shows it's held; LLM calls/example shows the
-    # decomposition win (one-call Predict -> deterministic disclaimer parsing).
+    # Before/after plot (a la conflation). Panel 1: the score GEPA optimizes (accuracy −
+    # 0.20/LLM-call). Panel 2: the classification metrics that validate the attribution —
+    # accuracy plus macro-averaged precision/recall/F1 over committees (each committee weighted
+    # equally). Panel 3: LLM calls/example, the decomposition win (one-call Predict ->
+    # deterministic disclaimer parsing).
     labels_xy = ["baseline\n(flex / Predict)", "optimized\n(GEPA code)"]
     colors = ["#9aa0a6", "#1a73e8"]
-    fig, (ax_score, ax_acc, ax_calls) = plt.subplots(1, 3, figsize=(11, 4))
+    fig, (ax_score, ax_cls, ax_calls) = plt.subplots(1, 3, figsize=(13, 4.5))
 
-    score_bars = ax_score.bar(labels_xy, [base_score, opt_score], color=colors)
+    score_bars = ax_score.bar(labels_xy, [base.score, opt.score], color=colors)
     ax_score.set_ylabel("mean metric score")
     ax_score.set_ylim(0, 1.1)
     ax_score.set_title("Score (accuracy − call penalty)")
-    for bar, s in zip(score_bars, [base_score, opt_score], strict=True):
+    for bar, s in zip(score_bars, [base.score, opt.score], strict=True):
         ax_score.text(bar.get_x() + bar.get_width() / 2, s + 0.02, f"{s:.2f}", ha="center", va="bottom")
 
-    acc_bars = ax_acc.bar(labels_xy, [base_acc, opt_acc], color=colors)
-    ax_acc.set_ylabel("test accuracy")
-    ax_acc.set_ylim(0, 1.1)
-    ax_acc.set_title("Accuracy")
-    for bar, a in zip(acc_bars, [base_acc, opt_acc], strict=True):
-        ax_acc.text(bar.get_x() + bar.get_width() / 2, a + 0.02, f"{a:.1%}", ha="center", va="bottom")
+    # Grouped bars: one group per metric, baseline vs optimized side by side.
+    metric_names = ["Accuracy", "Macro-P", "Macro-R", "Macro-F1"]
+    base_vals = [base.accuracy, base.macro_precision, base.macro_recall, base.macro_f1]
+    opt_vals = [opt.accuracy, opt.macro_precision, opt.macro_recall, opt.macro_f1]
+    xpos = np.arange(len(metric_names))
+    width = 0.38
+    b_bars = ax_cls.bar(xpos - width / 2, base_vals, width, label="baseline", color=colors[0])
+    o_bars = ax_cls.bar(xpos + width / 2, opt_vals, width, label="optimized", color=colors[1])
+    ax_cls.set_xticks(xpos)
+    ax_cls.set_xticklabels(metric_names)
+    ax_cls.set_ylabel("score (0–1)")
+    ax_cls.set_ylim(0, 1.15)  # headroom for the on-bar labels near 1.0
+    ax_cls.set_title("Classification metrics (macro-avg over committees)")
+    ax_cls.legend(loc="lower right", fontsize=8)
+    for bars, vals in ((b_bars, base_vals), (o_bars, opt_vals)):
+        for bar, v in zip(bars, vals, strict=True):
+            ax_cls.text(
+                bar.get_x() + bar.get_width() / 2, v + 0.02, f"{v:.2f}",
+                ha="center", va="bottom", fontsize=7,
+            )
 
-    call_bars = ax_calls.bar(labels_xy, [base_calls, opt_calls], color=colors)
+    call_bars = ax_calls.bar(labels_xy, [base.avg_calls, opt.avg_calls], color=colors)
     ax_calls.set_ylabel("avg LLM calls / example")
-    ax_calls.set_ylim(0, max(base_calls, opt_calls, 1) * 1.2)
-    ax_calls.set_title("LLM calls")
-    for bar, n in zip(call_bars, [base_calls, opt_calls], strict=True):
+    ax_calls.set_ylim(0, max(base.avg_calls, opt.avg_calls, 1) * 1.2)
+    ax_calls.set_title("LLM calls (lower = more deterministic)")
+    for bar, n in zip(call_bars, [base.avg_calls, opt.avg_calls], strict=True):
         ax_calls.text(bar.get_x() + bar.get_width() / 2, n, f"{n:.1f}", ha="center", va="bottom")
 
     fig.suptitle(f"Political email committee attribution (n={len(test)})")
