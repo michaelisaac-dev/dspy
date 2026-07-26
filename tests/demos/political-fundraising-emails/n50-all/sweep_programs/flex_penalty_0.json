@@ -1,0 +1,29 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Identify the political committee that sponsored a fundraising email.\n\nThe committee's name is present in the email text itself, so most emails can be resolved\ndeterministically in code with no model call; reserve a model call only as a fallback for\nemails the code cannot resolve.",
+      "fields": [
+        {
+          "prefix": "Email Body:",
+          "description": "${email_body}"
+        },
+        {
+          "prefix": "Committee:",
+          "description": "${committee}"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "module_src": "class IdentifyCommitteeModule(dspy.Module):\n    def __init__(self):\n        super().__init__()\n        self.predict = dspy.Predict(dspy.Signature('email_body: str -> committee: str', \"Identify the political committee that sponsored a fundraising email.\\n\\nThe committee's name is present in the email text itself, so most emails can be resolved\\ndeterministically in code with no model call; reserve a model call only as a fallback for\\nemails the code cannot resolve.\"))\n\n    def forward(self, **inputs):\n        result = self.predict(**inputs)\n        return dspy.Prediction(committee=result.committee)",
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.0b1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

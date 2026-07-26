@@ -1,0 +1,4912 @@
+{
+ "meta": {
+  "generated_at": "2026-07-26T17:17:13+00:00",
+  "exec_model": "anthropic/claude-haiku-4-5",
+  "reflection_model": "anthropic/claude-opus-5",
+  "max_metric_calls": 1200,
+  "eval_threads": 8,
+  "n_train": 60,
+  "n_val": 30,
+  "n_test": 240,
+  "test_split": "class-balanced subset",
+  "cache": "disabled (dspy disk + memory)",
+  "latency_note": "per-example wall time measured inside a 8-thread pool; concurrency inflates absolute values slightly but consistently across rows",
+  "dspy_version": "3.3.0b1",
+  "python": "3.10.19"
+ },
+ "baseline": {
+  "records": [
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.9486365000011574,
+    "cost_usd": 0.001187,
+    "prompt_tokens": 452,
+    "completion_tokens": 147,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 4.929118667001603,
+    "cost_usd": 0.001219,
+    "prompt_tokens": 449,
+    "completion_tokens": 154,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 4.680659834000835,
+    "cost_usd": 0.001406,
+    "prompt_tokens": 461,
+    "completion_tokens": 189,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.8585630419984227,
+    "cost_usd": 0.000561,
+    "prompt_tokens": 451,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 4.0860835000021325,
+    "cost_usd": 0.001202,
+    "prompt_tokens": 457,
+    "completion_tokens": 149,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 4.239305499999318,
+    "cost_usd": 0.00127,
+    "prompt_tokens": 460,
+    "completion_tokens": 162,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 4.113102291998075,
+    "cost_usd": 0.001127,
+    "prompt_tokens": 452,
+    "completion_tokens": 135,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 4.9326938330013945,
+    "cost_usd": 0.001064,
+    "prompt_tokens": 454,
+    "completion_tokens": 122,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.424403707998863,
+    "cost_usd": 0.001288,
+    "prompt_tokens": 468,
+    "completion_tokens": 164,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8062515419987903,
+    "cost_usd": 0.001181,
+    "prompt_tokens": 461,
+    "completion_tokens": 144,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.8655734580024728,
+    "cost_usd": 0.00057,
+    "prompt_tokens": 460,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.7689137090019358,
+    "cost_usd": 0.000977,
+    "prompt_tokens": 472,
+    "completion_tokens": 101,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.030532791999576,
+    "cost_usd": 0.001052,
+    "prompt_tokens": 452,
+    "completion_tokens": 120,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.28578333400219,
+    "cost_usd": 0.001264,
+    "prompt_tokens": 464,
+    "completion_tokens": 160,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9730752909999865,
+    "cost_usd": 0.00127,
+    "prompt_tokens": 460,
+    "completion_tokens": 162,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.5747642499991343,
+    "cost_usd": 0.000567,
+    "prompt_tokens": 457,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.2107919999980368,
+    "cost_usd": 0.00121,
+    "prompt_tokens": 460,
+    "completion_tokens": 150,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.9384332920017187,
+    "cost_usd": 0.001009,
+    "prompt_tokens": 454,
+    "completion_tokens": 111,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.670977875000972,
+    "cost_usd": 0.001243,
+    "prompt_tokens": 463,
+    "completion_tokens": 156,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.8475209589996666,
+    "cost_usd": 0.001041,
+    "prompt_tokens": 446,
+    "completion_tokens": 119,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7697964580002008,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8913878339990333,
+    "cost_usd": 0.001189,
+    "prompt_tokens": 459,
+    "completion_tokens": 146,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6950978750028298,
+    "cost_usd": 0.000558,
+    "prompt_tokens": 448,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9588726250003674,
+    "cost_usd": 0.001237,
+    "prompt_tokens": 462,
+    "completion_tokens": 155,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6865312500012806,
+    "cost_usd": 0.000562,
+    "prompt_tokens": 452,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.1195057080003608,
+    "cost_usd": 0.000881,
+    "prompt_tokens": 451,
+    "completion_tokens": 86,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.3982708750008896,
+    "cost_usd": 0.000567,
+    "prompt_tokens": 457,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.1202667910001765,
+    "cost_usd": 0.00118,
+    "prompt_tokens": 450,
+    "completion_tokens": 146,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.4536332079987915,
+    "cost_usd": 0.001106,
+    "prompt_tokens": 461,
+    "completion_tokens": 129,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.5979436249981518,
+    "cost_usd": 0.000576,
+    "prompt_tokens": 466,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9442920420005976,
+    "cost_usd": 0.001144,
+    "prompt_tokens": 459,
+    "completion_tokens": 137,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.5434041670014267,
+    "cost_usd": 0.0013,
+    "prompt_tokens": 460,
+    "completion_tokens": 168,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.9588877089991001,
+    "cost_usd": 0.000571,
+    "prompt_tokens": 461,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7793804579996504,
+    "cost_usd": 0.000569,
+    "prompt_tokens": 459,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.9081657909991918,
+    "cost_usd": 0.000569,
+    "prompt_tokens": 459,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.513262084001326,
+    "cost_usd": 0.001231,
+    "prompt_tokens": 451,
+    "completion_tokens": 156,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.464113250000082,
+    "cost_usd": 0.001157,
+    "prompt_tokens": 452,
+    "completion_tokens": 141,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.4442492089983716,
+    "cost_usd": 0.000571,
+    "prompt_tokens": 461,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.006044917001418,
+    "cost_usd": 0.001373,
+    "prompt_tokens": 458,
+    "completion_tokens": 183,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.7464523330017983,
+    "cost_usd": 0.001237,
+    "prompt_tokens": 452,
+    "completion_tokens": 157,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9522166250026203,
+    "cost_usd": 0.000983,
+    "prompt_tokens": 458,
+    "completion_tokens": 105,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.4555234580002434,
+    "cost_usd": 0.001222,
+    "prompt_tokens": 462,
+    "completion_tokens": 152,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.485200082999654,
+    "cost_usd": 0.001239,
+    "prompt_tokens": 454,
+    "completion_tokens": 157,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.2790488749997166,
+    "cost_usd": 0.001038,
+    "prompt_tokens": 443,
+    "completion_tokens": 119,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.959273917000246,
+    "cost_usd": 0.001369,
+    "prompt_tokens": 449,
+    "completion_tokens": 184,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.3160754169985012,
+    "cost_usd": 0.000576,
+    "prompt_tokens": 466,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6948465420027787,
+    "cost_usd": 0.000572,
+    "prompt_tokens": 462,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6824442079996516,
+    "cost_usd": 0.000563,
+    "prompt_tokens": 453,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.3593779590009945,
+    "cost_usd": 0.001251,
+    "prompt_tokens": 461,
+    "completion_tokens": 158,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.93233033299839,
+    "cost_usd": 0.001114,
+    "prompt_tokens": 459,
+    "completion_tokens": 131,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.253966667001805,
+    "cost_usd": 0.001325,
+    "prompt_tokens": 465,
+    "completion_tokens": 172,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 3.449085958000069,
+    "cost_usd": 0.00153,
+    "prompt_tokens": 475,
+    "completion_tokens": 211,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7389869170001475,
+    "cost_usd": 0.000578,
+    "prompt_tokens": 468,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8783642909984337,
+    "cost_usd": 0.001167,
+    "prompt_tokens": 452,
+    "completion_tokens": 143,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.4038858329986397,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.6944507920015894,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.046241457999713,
+    "cost_usd": 0.001256,
+    "prompt_tokens": 456,
+    "completion_tokens": 160,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 3.4499109580028744,
+    "cost_usd": 0.00159,
+    "prompt_tokens": 460,
+    "completion_tokens": 226,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.0832139580015792,
+    "cost_usd": 0.000559,
+    "prompt_tokens": 449,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.0035749589987972,
+    "cost_usd": 0.001371,
+    "prompt_tokens": 466,
+    "completion_tokens": 181,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.9067899999972724,
+    "cost_usd": 0.001165,
+    "prompt_tokens": 465,
+    "completion_tokens": 140,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.812947582999186,
+    "cost_usd": 0.001507,
+    "prompt_tokens": 457,
+    "completion_tokens": 210,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.3101226660000975,
+    "cost_usd": 0.0013,
+    "prompt_tokens": 455,
+    "completion_tokens": 169,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.3009723750001285,
+    "cost_usd": 0.001319,
+    "prompt_tokens": 464,
+    "completion_tokens": 171,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.027581333000853,
+    "cost_usd": 0.001134,
+    "prompt_tokens": 454,
+    "completion_tokens": 136,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7800989169991226,
+    "cost_usd": 0.000572,
+    "prompt_tokens": 462,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9932162090008205,
+    "cost_usd": 0.001125,
+    "prompt_tokens": 455,
+    "completion_tokens": 134,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.8238554169984127,
+    "cost_usd": 0.001203,
+    "prompt_tokens": 448,
+    "completion_tokens": 151,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.5052368750002643,
+    "cost_usd": 0.001393,
+    "prompt_tokens": 463,
+    "completion_tokens": 186,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.4334164160027285,
+    "cost_usd": 0.000862,
+    "prompt_tokens": 457,
+    "completion_tokens": 81,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.1152399589991546,
+    "cost_usd": 0.00128,
+    "prompt_tokens": 465,
+    "completion_tokens": 163,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.4273569580000185,
+    "cost_usd": 0.00057,
+    "prompt_tokens": 460,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 4.724615999999514,
+    "cost_usd": 0.001361,
+    "prompt_tokens": 461,
+    "completion_tokens": 180,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6626627500008908,
+    "cost_usd": 0.000559,
+    "prompt_tokens": 449,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.4701704170001904,
+    "cost_usd": 0.001114,
+    "prompt_tokens": 454,
+    "completion_tokens": 132,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.7500379160010198,
+    "cost_usd": 0.000966,
+    "prompt_tokens": 446,
+    "completion_tokens": 104,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.075319583000237,
+    "cost_usd": 0.001276,
+    "prompt_tokens": 466,
+    "completion_tokens": 162,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 8.20635058300104,
+    "cost_usd": 0.001183,
+    "prompt_tokens": 453,
+    "completion_tokens": 146,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9553684589991462,
+    "cost_usd": 0.001259,
+    "prompt_tokens": 469,
+    "completion_tokens": 158,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.2121233340003528,
+    "cost_usd": 0.001266,
+    "prompt_tokens": 451,
+    "completion_tokens": 163,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.2488256670003466,
+    "cost_usd": 0.001225,
+    "prompt_tokens": 460,
+    "completion_tokens": 153,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8078718329998082,
+    "cost_usd": 0.001068,
+    "prompt_tokens": 463,
+    "completion_tokens": 121,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.0941903330021887,
+    "cost_usd": 0.00134,
+    "prompt_tokens": 460,
+    "completion_tokens": 176,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.91740524999841,
+    "cost_usd": 0.001426,
+    "prompt_tokens": 456,
+    "completion_tokens": 194,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 4.7368866659999185,
+    "cost_usd": 0.001197,
+    "prompt_tokens": 452,
+    "completion_tokens": 149,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 4.178036208999401,
+    "cost_usd": 0.001524,
+    "prompt_tokens": 479,
+    "completion_tokens": 209,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6852588750007271,
+    "cost_usd": 0.000559,
+    "prompt_tokens": 449,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.7525321659995825,
+    "cost_usd": 0.000564,
+    "prompt_tokens": 454,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.666712957998243,
+    "cost_usd": 0.001139,
+    "prompt_tokens": 449,
+    "completion_tokens": 138,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.1849619999993593,
+    "cost_usd": 0.001189,
+    "prompt_tokens": 454,
+    "completion_tokens": 147,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.055713833000482,
+    "cost_usd": 0.0013,
+    "prompt_tokens": 450,
+    "completion_tokens": 170,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7834102910019283,
+    "cost_usd": 0.000581,
+    "prompt_tokens": 471,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.0303109169981326,
+    "cost_usd": 0.001161,
+    "prompt_tokens": 456,
+    "completion_tokens": 141,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.966347207999206,
+    "cost_usd": 0.001364,
+    "prompt_tokens": 479,
+    "completion_tokens": 177,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.3929783749990747,
+    "cost_usd": 0.0012,
+    "prompt_tokens": 450,
+    "completion_tokens": 150,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9625951249981881,
+    "cost_usd": 0.001209,
+    "prompt_tokens": 464,
+    "completion_tokens": 149,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.9773165000005974,
+    "cost_usd": 0.000575,
+    "prompt_tokens": 465,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.0412123749993043,
+    "cost_usd": 0.00131,
+    "prompt_tokens": 460,
+    "completion_tokens": 170,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.5269629169997643,
+    "cost_usd": 0.001355,
+    "prompt_tokens": 455,
+    "completion_tokens": 180,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.210176832999423,
+    "cost_usd": 0.001108,
+    "prompt_tokens": 458,
+    "completion_tokens": 130,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.9068842080014292,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.4232050409991643,
+    "cost_usd": 0.00124,
+    "prompt_tokens": 460,
+    "completion_tokens": 156,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.1406454579991987,
+    "cost_usd": 0.001283,
+    "prompt_tokens": 458,
+    "completion_tokens": 165,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.6094018749972747,
+    "cost_usd": 0.001413,
+    "prompt_tokens": 463,
+    "completion_tokens": 190,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8448905830009608,
+    "cost_usd": 0.001211,
+    "prompt_tokens": 461,
+    "completion_tokens": 150,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.9517375840005116,
+    "cost_usd": 0.001177,
+    "prompt_tokens": 452,
+    "completion_tokens": 145,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7870040830021026,
+    "cost_usd": 0.00057,
+    "prompt_tokens": 460,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7260388329996204,
+    "cost_usd": 0.000572,
+    "prompt_tokens": 462,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.4639318750014354,
+    "cost_usd": 0.001135,
+    "prompt_tokens": 450,
+    "completion_tokens": 137,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.802605125001719,
+    "cost_usd": 0.000562,
+    "prompt_tokens": 452,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6550769590030541,
+    "cost_usd": 0.000559,
+    "prompt_tokens": 449,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.2685564999992494,
+    "cost_usd": 0.001118,
+    "prompt_tokens": 443,
+    "completion_tokens": 135,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6441935000002559,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.619984042001306,
+    "cost_usd": 0.001213,
+    "prompt_tokens": 463,
+    "completion_tokens": 150,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6473226249981963,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.936879625001893,
+    "cost_usd": 0.001406,
+    "prompt_tokens": 476,
+    "completion_tokens": 186,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.9765221670022584,
+    "cost_usd": 0.000561,
+    "prompt_tokens": 451,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.8361987079988467,
+    "cost_usd": 0.000558,
+    "prompt_tokens": 448,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9293224579996604,
+    "cost_usd": 0.001229,
+    "prompt_tokens": 449,
+    "completion_tokens": 156,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.897617499998887,
+    "cost_usd": 0.001214,
+    "prompt_tokens": 459,
+    "completion_tokens": 151,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.3263310419970367,
+    "cost_usd": 0.001295,
+    "prompt_tokens": 460,
+    "completion_tokens": 167,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6308869999993476,
+    "cost_usd": 0.00056,
+    "prompt_tokens": 450,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.6865390409984684,
+    "cost_usd": 0.001384,
+    "prompt_tokens": 454,
+    "completion_tokens": 186,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7342549999993935,
+    "cost_usd": 0.000574,
+    "prompt_tokens": 464,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.2154187919986725,
+    "cost_usd": 0.001075,
+    "prompt_tokens": 460,
+    "completion_tokens": 123,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.1462469170000986,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.396935749999102,
+    "cost_usd": 0.000576,
+    "prompt_tokens": 466,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.275389082999027,
+    "cost_usd": 0.001186,
+    "prompt_tokens": 451,
+    "completion_tokens": 147,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.6492850829999952,
+    "cost_usd": 0.000556,
+    "prompt_tokens": 446,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.011970708001172,
+    "cost_usd": 0.001145,
+    "prompt_tokens": 455,
+    "completion_tokens": 138,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.982131374999881,
+    "cost_usd": 0.000993,
+    "prompt_tokens": 453,
+    "completion_tokens": 108,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.1157533330006117,
+    "cost_usd": 0.001233,
+    "prompt_tokens": 448,
+    "completion_tokens": 157,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.1616761250006675,
+    "cost_usd": 0.000578,
+    "prompt_tokens": 468,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.227113332999579,
+    "cost_usd": 0.001203,
+    "prompt_tokens": 458,
+    "completion_tokens": 149,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.8094316660026379,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.8741811670006427,
+    "cost_usd": 0.000572,
+    "prompt_tokens": 462,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.44135529200139,
+    "cost_usd": 0.001295,
+    "prompt_tokens": 450,
+    "completion_tokens": 169,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.7860761250012729,
+    "cost_usd": 0.000581,
+    "prompt_tokens": 471,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.0507123339993996,
+    "cost_usd": 0.001229,
+    "prompt_tokens": 454,
+    "completion_tokens": 155,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7013795839993691,
+    "cost_usd": 0.000569,
+    "prompt_tokens": 459,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.7167699169986008,
+    "cost_usd": 0.001012,
+    "prompt_tokens": 457,
+    "completion_tokens": 111,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7484403749986086,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.197996333001356,
+    "cost_usd": 0.000563,
+    "prompt_tokens": 453,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.7648755830014125,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.9414027499988151,
+    "cost_usd": 0.000563,
+    "prompt_tokens": 453,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 8.362439250002353,
+    "cost_usd": 0.00136,
+    "prompt_tokens": 455,
+    "completion_tokens": 181,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.888408040998911,
+    "cost_usd": 0.00117,
+    "prompt_tokens": 450,
+    "completion_tokens": 144,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.955675124998379,
+    "cost_usd": 0.001183,
+    "prompt_tokens": 458,
+    "completion_tokens": 145,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.7588626659999136,
+    "cost_usd": 0.001009,
+    "prompt_tokens": 459,
+    "completion_tokens": 110,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.6538625419998425,
+    "cost_usd": 0.000567,
+    "prompt_tokens": 457,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8589570410003944,
+    "cost_usd": 0.001166,
+    "prompt_tokens": 451,
+    "completion_tokens": 143,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 6.230144958000892,
+    "cost_usd": 0.001247,
+    "prompt_tokens": 452,
+    "completion_tokens": 159,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.9013826250011334,
+    "cost_usd": 0.000583,
+    "prompt_tokens": 473,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.0962737910012947,
+    "cost_usd": 0.001128,
+    "prompt_tokens": 453,
+    "completion_tokens": 135,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.205843084000662,
+    "cost_usd": 0.001272,
+    "prompt_tokens": 452,
+    "completion_tokens": 164,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.972088000002259,
+    "cost_usd": 0.001203,
+    "prompt_tokens": 458,
+    "completion_tokens": 149,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.026261749997502,
+    "cost_usd": 0.001051,
+    "prompt_tokens": 461,
+    "completion_tokens": 118,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.5477288339970983,
+    "cost_usd": 0.001009,
+    "prompt_tokens": 469,
+    "completion_tokens": 108,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.977860625000176,
+    "cost_usd": 0.001473,
+    "prompt_tokens": 463,
+    "completion_tokens": 202,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.5930827499978477,
+    "cost_usd": 0.000576,
+    "prompt_tokens": 466,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8371498750020692,
+    "cost_usd": 0.001084,
+    "prompt_tokens": 454,
+    "completion_tokens": 126,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8650612500023271,
+    "cost_usd": 0.001193,
+    "prompt_tokens": 453,
+    "completion_tokens": 148,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.682292666999274,
+    "cost_usd": 0.001114,
+    "prompt_tokens": 449,
+    "completion_tokens": 133,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7001599590003025,
+    "cost_usd": 0.00057,
+    "prompt_tokens": 460,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.0096416659980605,
+    "cost_usd": 0.001154,
+    "prompt_tokens": 454,
+    "completion_tokens": 140,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.7750534579972737,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.0771899999999732,
+    "cost_usd": 0.001158,
+    "prompt_tokens": 463,
+    "completion_tokens": 139,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.4051337499986403,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7154937910017907,
+    "cost_usd": 0.000569,
+    "prompt_tokens": 459,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.3630207079986576,
+    "cost_usd": 0.001287,
+    "prompt_tokens": 462,
+    "completion_tokens": 165,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.9309630000025209,
+    "cost_usd": 0.001178,
+    "prompt_tokens": 453,
+    "completion_tokens": 145,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.909182374998636,
+    "cost_usd": 0.001202,
+    "prompt_tokens": 467,
+    "completion_tokens": 147,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.5850813329998346,
+    "cost_usd": 0.001231,
+    "prompt_tokens": 461,
+    "completion_tokens": 154,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 6.547686208999949,
+    "cost_usd": 0.001064,
+    "prompt_tokens": 459,
+    "completion_tokens": 121,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.628694875002111,
+    "cost_usd": 0.001165,
+    "prompt_tokens": 450,
+    "completion_tokens": 143,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.338756207998813,
+    "cost_usd": 0.001369,
+    "prompt_tokens": 464,
+    "completion_tokens": 181,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.1882994579973456,
+    "cost_usd": 0.001146,
+    "prompt_tokens": 461,
+    "completion_tokens": 137,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.8097480830001587,
+    "cost_usd": 0.000571,
+    "prompt_tokens": 461,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.483640041999024,
+    "cost_usd": 0.001334,
+    "prompt_tokens": 459,
+    "completion_tokens": 175,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.162111665998964,
+    "cost_usd": 0.00112,
+    "prompt_tokens": 460,
+    "completion_tokens": 132,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7591793329993379,
+    "cost_usd": 0.000573,
+    "prompt_tokens": 463,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.986533375002182,
+    "cost_usd": 0.001579,
+    "prompt_tokens": 459,
+    "completion_tokens": 224,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.57957762499791,
+    "cost_usd": 0.001238,
+    "prompt_tokens": 463,
+    "completion_tokens": 155,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7507207920025394,
+    "cost_usd": 0.000563,
+    "prompt_tokens": 453,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 4.333163875002356,
+    "cost_usd": 0.001186,
+    "prompt_tokens": 456,
+    "completion_tokens": 146,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.021543584000028,
+    "cost_usd": 0.001108,
+    "prompt_tokens": 468,
+    "completion_tokens": 128,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.5456397499983723,
+    "cost_usd": 0.001304,
+    "prompt_tokens": 459,
+    "completion_tokens": 169,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.6951933750024182,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8502602919979836,
+    "cost_usd": 0.001129,
+    "prompt_tokens": 449,
+    "completion_tokens": 136,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.8368129169975873,
+    "cost_usd": 0.000568,
+    "prompt_tokens": 458,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.238132582999242,
+    "cost_usd": 0.001269,
+    "prompt_tokens": 469,
+    "completion_tokens": 160,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9119532499971683,
+    "cost_usd": 0.001008,
+    "prompt_tokens": 453,
+    "completion_tokens": 111,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.132128583998565,
+    "cost_usd": 0.0011,
+    "prompt_tokens": 450,
+    "completion_tokens": 130,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.116163583999878,
+    "cost_usd": 0.001064,
+    "prompt_tokens": 464,
+    "completion_tokens": 120,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.1770956670006854,
+    "cost_usd": 0.001233,
+    "prompt_tokens": 448,
+    "completion_tokens": 157,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.1992783329988015,
+    "cost_usd": 0.001432,
+    "prompt_tokens": 462,
+    "completion_tokens": 194,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.4574530419995426,
+    "cost_usd": 0.001426,
+    "prompt_tokens": 456,
+    "completion_tokens": 194,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.0046506660000887,
+    "cost_usd": 0.00129,
+    "prompt_tokens": 450,
+    "completion_tokens": 168,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7047560409992002,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.6134734170009324,
+    "cost_usd": 0.001026,
+    "prompt_tokens": 461,
+    "completion_tokens": 113,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.1137763330007147,
+    "cost_usd": 0.000568,
+    "prompt_tokens": 458,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.0476105419984378,
+    "cost_usd": 0.000559,
+    "prompt_tokens": 449,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9075362500007031,
+    "cost_usd": 0.001179,
+    "prompt_tokens": 449,
+    "completion_tokens": 146,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.9389709580027557,
+    "cost_usd": 0.001465,
+    "prompt_tokens": 455,
+    "completion_tokens": 202,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.2330365829984657,
+    "cost_usd": 0.001181,
+    "prompt_tokens": 466,
+    "completion_tokens": 143,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.064329042001191,
+    "cost_usd": 0.001263,
+    "prompt_tokens": 458,
+    "completion_tokens": 161,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.1047438339992368,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.1743204589984089,
+    "cost_usd": 0.000566,
+    "prompt_tokens": 456,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.419853792001959,
+    "cost_usd": 0.000892,
+    "prompt_tokens": 462,
+    "completion_tokens": 86,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.326571875000809,
+    "cost_usd": 0.001356,
+    "prompt_tokens": 466,
+    "completion_tokens": 178,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.979762875002052,
+    "cost_usd": 0.001535,
+    "prompt_tokens": 455,
+    "completion_tokens": 216,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8010005420001107,
+    "cost_usd": 0.001138,
+    "prompt_tokens": 448,
+    "completion_tokens": 138,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.7706768340030976,
+    "cost_usd": 0.000556,
+    "prompt_tokens": 446,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.668391374998464,
+    "cost_usd": 0.000574,
+    "prompt_tokens": 464,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.047418792000826,
+    "cost_usd": 0.001266,
+    "prompt_tokens": 451,
+    "completion_tokens": 163,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7447292079996259,
+    "cost_usd": 0.000569,
+    "prompt_tokens": 459,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.5774881249999453,
+    "cost_usd": 0.001189,
+    "prompt_tokens": 459,
+    "completion_tokens": 146,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.4979430419989512,
+    "cost_usd": 0.001296,
+    "prompt_tokens": 456,
+    "completion_tokens": 168,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.7723292500013486,
+    "cost_usd": 0.001116,
+    "prompt_tokens": 451,
+    "completion_tokens": 133,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.4815161660008016,
+    "cost_usd": 0.000846,
+    "prompt_tokens": 456,
+    "completion_tokens": 78,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.9485075830016285,
+    "cost_usd": 0.001158,
+    "prompt_tokens": 458,
+    "completion_tokens": 140,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 3.3169015829989803,
+    "cost_usd": 0.001226,
+    "prompt_tokens": 451,
+    "completion_tokens": 155,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.6903486249975685,
+    "cost_usd": 0.001012,
+    "prompt_tokens": 457,
+    "completion_tokens": 111,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.5628641250004875,
+    "cost_usd": 0.001495,
+    "prompt_tokens": 455,
+    "completion_tokens": 208,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.5060049579988117,
+    "cost_usd": 0.001057,
+    "prompt_tokens": 462,
+    "completion_tokens": 119,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 3.6459639169988804,
+    "cost_usd": 0.001356,
+    "prompt_tokens": 466,
+    "completion_tokens": 178,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8162925000033283,
+    "cost_usd": 0.001198,
+    "prompt_tokens": 458,
+    "completion_tokens": 148,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8277336669998476,
+    "cost_usd": 0.001138,
+    "prompt_tokens": 453,
+    "completion_tokens": 137,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 0.8482224580002367,
+    "cost_usd": 0.000565,
+    "prompt_tokens": 455,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 0.7932448750034382,
+    "cost_usd": 0.000569,
+    "prompt_tokens": 459,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.0429641249975248,
+    "cost_usd": 0.001246,
+    "prompt_tokens": 461,
+    "completion_tokens": 157,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 3.124425165999128,
+    "cost_usd": 0.001437,
+    "prompt_tokens": 462,
+    "completion_tokens": 195,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.6551225000002887,
+    "cost_usd": 0.001547,
+    "prompt_tokens": 477,
+    "completion_tokens": 214,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.3845934580022004,
+    "cost_usd": 0.001336,
+    "prompt_tokens": 471,
+    "completion_tokens": 173,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.4999489580004592,
+    "cost_usd": 0.000578,
+    "prompt_tokens": 468,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 2.2046432079987426,
+    "cost_usd": 0.001206,
+    "prompt_tokens": 461,
+    "completion_tokens": 149,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.20895895799913,
+    "cost_usd": 0.001499,
+    "prompt_tokens": 459,
+    "completion_tokens": 208,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 2.1322559580003144,
+    "cost_usd": 0.001259,
+    "prompt_tokens": 454,
+    "completion_tokens": 161,
+    "error": null
+   },
+   {
+    "gold": true,
+    "pred": true,
+    "n_calls": 1,
+    "latency_s": 1.083785540999088,
+    "cost_usd": 0.000571,
+    "prompt_tokens": 461,
+    "completion_tokens": 22,
+    "error": null
+   },
+   {
+    "gold": false,
+    "pred": false,
+    "n_calls": 1,
+    "latency_s": 1.8972442919985042,
+    "cost_usd": 0.00122,
+    "prompt_tokens": 465,
+    "completion_tokens": 151,
+    "error": null
+   }
+  ],
+  "by_penalty": {
+   "0.2": {
+    "n": 240,
+    "penalty": 0.2,
+    "score": 0.7133333333333345,
+    "accuracy": 0.8916666666666667,
+    "precision": 0.9051724137931034,
+    "recall": 0.875,
+    "f1": 0.8898305084745763,
+    "specificity": 0.9083333333333333,
+    "pool_prevalence": 0.7473275024295433,
+    "accuracy_at_pool_prevalence": 0.8834224165856819,
+    "precision_at_pool_prevalence": 0.9657915196459542,
+    "f1_at_pool_prevalence": 0.9181567501492454,
+    "avg_calls_at_pool_prevalence": 1.0,
+    "cost_usd_per_1k_at_pool_prevalence": 0.9823341107871714,
+    "tp": 105,
+    "fp": 11,
+    "fn": 15,
+    "tn": 109,
+    "avg_calls": 1.0,
+    "calls_total": 240,
+    "frac_examples_using_llm": 1.0,
+    "cost_usd_total": 0.24503200000000014,
+    "cost_usd_per_example": 0.0010209666666666673,
+    "cost_usd_per_1k_examples": 1.0209666666666672,
+    "latency_mean_s": 2.0812312466875484,
+    "latency_p50_s": 2.026261749997502,
+    "latency_p95_s": 4.113102291998075,
+    "prompt_tokens": 109852,
+    "completion_tokens": 27036,
+    "errors": 0,
+    "first_error": null,
+    "wall_s": 63.19852941699719,
+    "threads": 8
+   }
+  }
+ },
+ "runs": {
+  "0.2": {
+   "penalty": 0.2,
+   "max_metric_calls": 1200,
+   "optimization": {
+    "wall_s": 1712.540111667,
+    "calls": 58,
+    "cost_usd_litellm": 2.7956480000000004,
+    "prompt_tokens": 144919,
+    "completion_tokens": 90641,
+    "uncosted_calls": 0,
+    "changed_code": true
+   },
+   "test": {
+    "n": 240,
+    "penalty": 0.2,
+    "score": 0.9158333333333335,
+    "accuracy": 0.9208333333333333,
+    "precision": 0.8976377952755905,
+    "recall": 0.95,
+    "f1": 0.923076923076923,
+    "specificity": 0.8916666666666667,
+    "pool_prevalence": 0.7473275024295433,
+    "accuracy_at_pool_prevalence": 0.9352607709750567,
+    "precision_at_pool_prevalence": 0.9628759088812249,
+    "f1_at_pool_prevalence": 0.9563946194211405,
+    "avg_calls_at_pool_prevalence": 0.03956106252024619,
+    "cost_usd_per_1k_at_pool_prevalence": 0.0635551830255912,
+    "tp": 114,
+    "fp": 13,
+    "fn": 6,
+    "tn": 107,
+    "avg_calls": 0.0375,
+    "calls_total": 9,
+    "frac_examples_using_llm": 0.0375,
+    "cost_usd_total": 0.01361,
+    "cost_usd_per_example": 5.6708333333333334e-05,
+    "cost_usd_per_1k_examples": 0.05670833333333334,
+    "latency_mean_s": 0.13414643036239796,
+    "latency_p50_s": 0.004187124999589287,
+    "latency_p95_s": 0.8416775829973631,
+    "prompt_tokens": 10590,
+    "completion_tokens": 604,
+    "errors": 0,
+    "first_error": null,
+    "wall_s": 8.499128416999156,
+    "threads": 8
+   },
+   "records": [
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 1.741370542000368,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 1.7348182920031832,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 1,
+     "latency_s": 2.4945573339973635,
+     "cost_usd": 0.001299,
+     "prompt_tokens": 1189,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 1.68743941700086,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 1.6893178749996878,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 1.6697778329980792,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 1.7279504170001019,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 1.7545862499973737,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.00543479200132424,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.01614966600027401,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.013192750000598608,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.009185208000417333,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.007855125000787666,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.009097084002860356,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.009116334000282222,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.008642249998956686,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006084165997890523,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 1,
+     "latency_s": 4.247034249998251,
+     "cost_usd": 0.001271,
+     "prompt_tokens": 1161,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.007196083999588154,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.006805291999626206,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.006980499998462619,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006569582998054102,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004670999998779735,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003770584000449162,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004066625002451474,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0044037919979018625,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0047091670021472964,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005361708001146326,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004425833001732826,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004436582999915117,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005822249997436302,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.007249750000482891,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.006456792001699796,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004416791001858655,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006348332997731632,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004343249998782994,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004978582997864578,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004472749998967629,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 1,
+     "latency_s": 0.8416775829973631,
+     "cost_usd": 0.001288,
+     "prompt_tokens": 1178,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005844291998073459,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0045592079986818135,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004624957997293677,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.00816704099997878,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.008425208001426654,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.007304541999474168,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005248416000540601,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.008254207998106722,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0035799590004899073,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005785457997262711,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0045731249992968515,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.007437624997692183,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005591624998487532,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.006444291997468099,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.008035333001316758,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006160875000205124,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006027792001987109,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003965208001318388,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005472082997584948,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0046121250015858095,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005684040999767603,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.007770750002237037,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004411791000165977,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006554374998813728,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004455999998754123,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.00566400000025169,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.006836042000941234,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003831750000244938,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004133125003136229,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003190749997884268,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003168208000715822,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005842457998369355,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0054477089979627635,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004542540998954792,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003855375001876382,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0046450409972749185,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004187124999589287,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005066334000730421,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004544583000097191,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.00394287500239443,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.006675958000414539,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0035290839987283107,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003785999997489853,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003981165998993674,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003036042002349859,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005513583000720246,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005812249997688923,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005059417002485134,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004026708000310464,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003718458003277192,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005631625001115026,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005563375001656823,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0048484580001968425,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005246583998086862,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.00547983300202759,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005161875000339933,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005476500002259854,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005041459000494797,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.00433537499702652,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004959042002155911,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004602916000294499,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005500250001205131,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.00477725000018836,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004146416002186015,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003864040998450946,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.005661458999384195,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005223249998380197,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004525500000454485,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004722749999928055,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0083165830001235,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003968584001995623,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0042952920011885,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004624832999979844,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0038120839999464806,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0054382080015784595,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005095374999655178,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.006106583001383115,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004227291999995941,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004033958997752052,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004532625000138069,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004398207998747239,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004248125002050074,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004320583000662737,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002683416001673322,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.005339708000974497,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004338082999311155,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 1,
+     "latency_s": 0.6865382500000123,
+     "cost_usd": 0.001291,
+     "prompt_tokens": 1181,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004419042001245543,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004394333001982886,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004368541998701403,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004464082998310914,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.00480500000048778,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003794332998950267,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004280624998500571,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.004444750000402564,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003378416997293243,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0036480839989962988,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0029087910006637685,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0034510420009610243,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003646208999271039,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0027916670005652122,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003098165998380864,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002760749997833045,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0028422079994925298,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0029892499987909105,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003648375000921078,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0034397919989714865,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.002460291998431785,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0026243330030411016,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0032559579994995147,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003072916002565762,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003433750000112923,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0028621249985008035,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0052024169999640435,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004478792001464171,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003521791000821395,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0032963750018097926,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0035669589997269213,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0036424579993763473,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003200000002834713,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002773791999061359,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 1,
+     "latency_s": 0.6741646660011611,
+     "cost_usd": 0.001284,
+     "prompt_tokens": 1174,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004270500001439359,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003904040997440461,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003219916001398815,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.003270207998866681,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003717208997841226,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003242292001232272,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0021919999999227002,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0027551249986572657,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.002631333001772873,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 1,
+     "latency_s": 0.8049618749973888,
+     "cost_usd": 0.001281,
+     "prompt_tokens": 1171,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0027602079971984494,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 1,
+     "latency_s": 1.3978339580025931,
+     "cost_usd": 0.001282,
+     "prompt_tokens": 1172,
+     "completion_tokens": 22,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002741500000411179,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0020944159987266175,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0018295000008947682,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0016627500008326024,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.001680957997450605,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.002075332999083912,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.001661208996665664,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0016630409991194028,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0015961249991960358,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.001823790997150354,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.001555124999867985,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.001622083997062873,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.001571290998981567,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0018011669999395963,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0015230419994622935,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0015235409991873894,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0013425420002022292,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0017841250009951182,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0015464170028280932,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.001376750002236804,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0013903330000175629,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0013564590008172672,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.001787834000424482,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0016857080008776393,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0014803749982092995,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0013706249992537778,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0013264579974929802,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0013927500003774185,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0013548749993788078,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.001336457997240359,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0014739170001121238,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0013890000009268988,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.001422125002136454,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0012985419998585712,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0013977499984321184,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": false,
+     "n_calls": 1,
+     "latency_s": 2.1650179169992043,
+     "cost_usd": 0.001809,
+     "prompt_tokens": 1179,
+     "completion_tokens": 126,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.004811250000784639,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0033813749978435226,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.002921290997619508,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0027196249975531828,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0023436670016963035,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0022680840011162218,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0022390420017472934,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0021196669986238703,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0031163339990598615,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0022445419999712612,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0028534160010167398,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0025216670001100283,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0025745829989318736,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0022065830016799737,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0024565419989812654,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.003288582996901823,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0032667910018062685,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0022045839978090953,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0028381670017552096,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0025044590001925826,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 1,
+     "latency_s": 5.962228041000344,
+     "cost_usd": 0.002805,
+     "prompt_tokens": 1185,
+     "completion_tokens": 324,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0021432499997899868,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002963709001051029,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.002458875002048444,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0023733330017421395,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002061792001768481,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0018310839986952487,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.0021253749982861336,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.0020890830019197892,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": true,
+     "pred": true,
+     "n_calls": 0,
+     "latency_s": 0.002207375000580214,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    },
+    {
+     "gold": false,
+     "pred": false,
+     "n_calls": 0,
+     "latency_s": 0.002051457999186823,
+     "cost_usd": 0.0,
+     "prompt_tokens": 0,
+     "completion_tokens": 0,
+     "error": null
+    }
+   ],
+   "module_src": "class SamePlaceModule(dspy.Module):\n    def __init__(self):\n        super().__init__()\n        # Only used for the genuinely ambiguous cases the deterministic rules can't settle.\n        self.adjudicate = dspy.Predict(dspy.Signature(\n            \"input_name: str, input_address: str, match_name: str, match_address: str, \"\n            \"distance: float, name_similarity: float, evidence: str -> is_same: bool\",\n            \"You are doing business-listing deduplication (entity resolution). Decide whether \"\n            \"listing A (input_name / input_address) and listing B (match_name / match_address) \"\n            \"refer to the SAME physical place (the same business occupying the same spot).\\n\\n\"\n            \"Domain knowledge to apply:\\n\"\n            \"- Suite/unit/floor/space/room designators, trailing suite letters, punctuation, and \"\n            \"street-type or directional abbreviations (ST/STREET, AVE/AVENUE, BLVD/BOULEVARD, \"\n            \"RD/ROAD, DR/DRIVE, HWY/HIGHWAY, N/NORTH, ...) are formatting noise: they do NOT make \"\n            \"two listings different.\\n\"\n            \"- Store/franchise numbers ('#7600'), legal suffixes (INC, LLC, CO, CORP), leading \"\n            \"'THE', singular/plural endings, '&' vs 'AND', and generic or cuisine descriptors \"\n            \"(RESTAURANT, GRILL, KITCHEN, BAR, CAFE, MARKET, STORE, SHOP, FOOD, CUISINE, DINER, \"\n            \"EXPRESS, and cuisine words like CHINESE or MEXICAN) are also noise WHEN the \"\n            \"distinctive brand tokens already match. A listing named '<BRAND> RESTAURANT' and one \"\n            \"named '<BRAND> <CUISINE> FOOD' at the same street address are the SAME place.\\n\"\n            \"- Two listings must share a DISTINCTIVE brand token to be the same place. City, \"\n            \"neighborhood, or landmark words (e.g. the city name, 'COLISEUM', 'CENTER', 'PLAZA') \"\n            \"and generic descriptors are NOT distinctive: sharing only those is weak evidence and \"\n            \"usually means two different businesses.\\n\"\n            \"- One street address can host MANY distinct places: malls, stadiums, arenas, airports, \"\n            \"office towers, food halls and strip centers. Different concession stands, sections, \"\n            \"suites, gates, kiosks or tenants at one address are DIFFERENT physical places, even \"\n            \"though the street address string is identical.\\n\"\n            \"- The same chain brand at a different street number or a different street is a \"\n            \"DIFFERENT physical place: answer False.\\n\"\n            \"- `distance` is the separation between the two coordinates in meters. Under ~30 m is \"\n            \"effectively the same point. Tens of meters at the same address with unrelated names \"\n            \"means separate units. Over ~100 m almost always means different physical places, \"\n            \"regardless of the address strings matching.\\n\"\n            \"- Different brand names at the exact same address and essentially the same point can be \"\n            \"a rename/rebrand (True), but only when the names or address details tie them together; \"\n            \"when the names share no distinctive words, prefer False.\\n\"\n            \"- `name_similarity` is a precomputed 0-1 token-level name similarity and `evidence` \"\n            \"summarizes the deterministic address comparison. Treat both as reliable features.\\n\\n\"\n            \"Output only the boolean field is_same: True if they are the same physical place, \"\n            \"otherwise False.\"\n        ))\n\n    def forward(self, **inputs):\n        import re\n        import difflib\n\n        NAME_STOP = {\n            \"THE\", \"A\", \"AN\", \"OF\", \"AND\", \"AT\", \"ON\", \"IN\", \"INC\", \"INCORPORATED\",\n            \"LLC\", \"LLP\", \"LP\", \"LTD\", \"CORP\", \"CORPORATION\", \"CO\",\n            \"COMPANY\", \"DBA\", \"NO\", \"NUM\", \"NUMBER\",\n        }\n        # Words that carry little identifying power on their own: business-type,\n        # cuisine and venue-part descriptors.\n        GENERIC = {\n            \"STORE\", \"STORES\", \"SHOP\", \"SHOPPE\", \"RESTAURANT\", \"RESTAURANTE\",\n            \"CAFE\", \"CAFETERIA\", \"COFFEE\", \"BAR\", \"GRILL\", \"GRILLE\",\n            \"KITCHEN\", \"MARKET\", \"MARKETPLACE\", \"DELI\", \"DELICATESSEN\", \"BAKERY\",\n            \"PIZZA\", \"PIZZERIA\", \"SECTION\", \"FOOD\", \"FOODS\", \"CUISINE\", \"EATERY\",\n            \"DINER\", \"BUFFET\", \"BBQ\", \"TAKEOUT\", \"EXPRESS\",\n            \"CHINESE\", \"MEXICAN\", \"ITALIAN\", \"JAPANESE\", \"THAI\", \"INDIAN\",\n            \"VIETNAMESE\", \"KOREAN\", \"AMERICAN\", \"MEDITERRANEAN\", \"ASIAN\",\n            \"SUITE\", \"STE\", \"UNIT\", \"STAND\", \"KIOSK\", \"GATE\", \"CENTER\", \"CENTRE\",\n            \"PLAZA\", \"MALL\", \"SERVICE\", \"SERVICES\", \"GROUP\", \"CLUB\", \"LOUNGE\",\n            \"N\", \"S\", \"E\", \"W\", \"NE\", \"NW\", \"SE\", \"SW\",\n            \"NORTH\", \"SOUTH\", \"EAST\", \"WEST\",\n        }\n        STREET_MAP = {\n            \"STREET\": \"ST\", \"STR\": \"ST\", \"ST\": \"ST\",\n            \"AVENUE\": \"AVE\", \"AVEN\": \"AVE\", \"AVE\": \"AVE\", \"AV\": \"AVE\",\n            \"BOULEVARD\": \"BLVD\", \"BLVD\": \"BLVD\", \"BOUL\": \"BLVD\",\n            \"ROAD\": \"RD\", \"RD\": \"RD\",\n            \"DRIVE\": \"DR\", \"DRIV\": \"DR\", \"DR\": \"DR\", \"DRV\": \"DR\",\n            \"LANE\": \"LN\", \"LN\": \"LN\",\n            \"COURT\": \"CT\", \"CT\": \"CT\",\n            \"PLACE\": \"PL\", \"PL\": \"PL\",\n            \"PARKWAY\": \"PKWY\", \"PKWY\": \"PKWY\", \"PKY\": \"PKWY\",\n            \"HIGHWAY\": \"HWY\", \"HWY\": \"HWY\",\n            \"CIRCLE\": \"CIR\", \"CIR\": \"CIR\",\n            \"TERRACE\": \"TER\", \"TER\": \"TER\",\n            \"SQUARE\": \"SQ\", \"SQ\": \"SQ\",\n            \"TRAIL\": \"TRL\", \"TRL\": \"TRL\",\n            \"EXPRESSWAY\": \"EXPY\", \"EXPY\": \"EXPY\",\n            \"PLAZA\": \"PLZ\", \"PLZ\": \"PLZ\",\n            \"WAY\": \"WAY\",\n            \"NORTH\": \"N\", \"SOUTH\": \"S\", \"EAST\": \"E\", \"WEST\": \"W\",\n            \"NORTHEAST\": \"NE\", \"NORTHWEST\": \"NW\",\n            \"SOUTHEAST\": \"SE\", \"SOUTHWEST\": \"SW\",\n        }\n        UNIT_MARKERS = {\n            \"STE\", \"SUITE\", \"UNIT\", \"APT\", \"APARTMENT\", \"BLDG\", \"BUILDING\",\n            \"FL\", \"FLR\", \"FLOOR\", \"RM\", \"ROOM\", \"SPC\", \"SPACE\", \"LOT\", \"BOX\",\n        }\n        DIRECTIONALS = {\"N\", \"S\", \"E\", \"W\", \"NE\", \"NW\", \"SE\", \"SW\"}\n\n        def clean(text: str) -> str:\n            \"\"\"Uppercase a string and turn every non-alphanumeric char into a space.\"\"\"\n            s = str(text or \"\").upper().replace(\"&\", \" AND \")\n            s = re.sub(r\"[^A-Z0-9]+\", \" \", s)\n            return re.sub(r\"\\s+\", \" \", s).strip()\n\n        def stem(tok: str) -> str:\n            \"\"\"Crude singular form so LIQUOR/LIQUORS and DONUT/DONUTS match.\"\"\"\n            if len(tok) > 3 and tok.endswith(\"S\") and not tok.endswith(\"SS\"):\n                return tok[:-1]\n            return tok\n\n        def name_numbers(name: str) -> set:\n            \"\"\"Explicit numbers appearing in a name (store/suite/section numbers).\"\"\"\n            return set(re.findall(r\"\\d+\", str(name or \"\")))\n\n        def name_tokens(name: str) -> list:\n            \"\"\"Normalized, stemmed word tokens of a business name (numbers dropped).\"\"\"\n            s = clean(name)\n            s = re.sub(r\"\\b\\d+\\b\", \" \", s)\n            toks = [t for t in s.split() if t and t not in NAME_STOP]\n            return [stem(t) for t in toks]\n\n        def addr_parts(addr: str):\n            \"\"\"Return (house_number, street_token_list) from a street address.\"\"\"\n            s = clean(addr)\n            toks = s.split()\n            number = \"\"\n            if toks and toks[0].isdigit():\n                number = toks[0]\n                toks = toks[1:]\n            cut = len(toks)\n            for i, t in enumerate(toks):\n                if t in UNIT_MARKERS:\n                    cut = i\n                    break\n            toks = toks[:cut]\n            toks = [STREET_MAP.get(t, t) for t in toks]\n            # drop a trailing tiny token (suite letter / unit number like \"G\", \"101\", \"A1\")\n            while len(toks) > 1 and (toks[-1].isdigit() or\n                                     (len(toks[-1]) <= 2 and toks[-1] not in DIRECTIONALS)):\n                toks = toks[:-1]\n            toks = [stem(t) for t in toks if t]\n            return number, toks\n\n        def ratio(a: str, b: str) -> float:\n            \"\"\"Character-level similarity of two strings in [0, 1].\"\"\"\n            if not a or not b:\n                return 0.0\n            return difflib.SequenceMatcher(None, a, b).ratio()\n\n        def token_close(x: str, y: str) -> bool:\n            \"\"\"Two name tokens are 'the same word' (spelling variants / prefixes).\"\"\"\n            if x == y:\n                return True\n            if len(x) >= 4 and len(y) >= 4 and (x.startswith(y) or y.startswith(x)):\n                return True\n            return ratio(x, y) >= 0.87\n\n        def match_tokens(la: list, lb: list) -> list:\n            \"\"\"Greedy one-to-one pairing of tokens; returns the matched token pairs.\"\"\"\n            remaining = list(lb)\n            pairs = []\n            for x in la:\n                for i, y in enumerate(remaining):\n                    if token_close(x, y):\n                        pairs.append((x, y))\n                        remaining.pop(i)\n                        break\n            return pairs\n\n        def set_sim(sa: set, sb: set) -> float:\n            \"\"\"Jaccard similarity of two token sets.\"\"\"\n            if not sa or not sb:\n                return 0.0\n            return len(sa & sb) / float(len(sa | sb))\n\n        in_name = inputs.get(\"input_name\", \"\")\n        in_addr = inputs.get(\"input_address\", \"\")\n        m_name = inputs.get(\"match_name\", \"\")\n        m_addr = inputs.get(\"match_address\", \"\")\n        try:\n            dist = float(inputs.get(\"distance\", 0.0) or 0.0)\n        except (TypeError, ValueError):\n            dist = 0.0\n\n        na = name_tokens(in_name)\n        nb = name_tokens(m_name)\n\n        pairs = match_tokens(na, nb)\n        matched = len(pairs)\n        # Dice-style token similarity (never inflated by char-level noise).\n        name_sim = (2.0 * matched / float(len(na) + len(nb))) if (na and nb) else 0.0\n\n        # Distinctive (non-generic) words are what really tie two listings together.\n        na_distinct = [t for t in na if t not in GENERIC and len(t) > 2]\n        nb_distinct = [t for t in nb if t not in GENERIC and len(t) > 2]\n        d_pairs = match_tokens(na_distinct, nb_distinct)\n        matched_distinct = len(d_pairs)\n        distinctive_shared = matched_distinct\n\n        containment = bool(na) and bool(nb) and matched == min(len(na), len(nb))\n        # All distinctive words of the shorter brand name appear in the longer one:\n        # \"<BRAND> RESTAURANT\" vs \"<BRAND> <CUISINE> FOOD\" style pairs.\n        distinct_containment = (\n            bool(na_distinct) and bool(nb_distinct)\n            and matched_distinct == min(len(na_distinct), len(nb_distinct))\n            and matched_distinct >= 1\n        )\n        if (containment or distinct_containment) and distinctive_shared:\n            name_sim = max(name_sim, 0.9)\n\n        num_a, st_a = addr_parts(in_addr)\n        num_b, st_b = addr_parts(m_addr)\n        street_sim = max(set_sim(set(st_a), set(st_b)), ratio(\" \".join(st_a), \" \".join(st_b)))\n        streets_match = bool(st_a) and bool(st_b) and street_sim >= 0.85\n        streets_conflict = bool(st_a) and bool(st_b) and street_sim < 0.5\n        nums_present = bool(num_a) and bool(num_b)\n        nums_match = nums_present and num_a == num_b\n        nums_conflict = nums_present and num_a != num_b\n\n        same_address = nums_match and (streets_match or not st_a or not st_b)\n\n        num_in_a = name_numbers(in_name)\n        num_in_b = name_numbers(m_name)\n        # Different explicit unit/section/store numbers embedded in otherwise different\n        # names => two separate sub-units of one big complex.\n        subunit_conflict = (\n            bool(num_in_a) and bool(num_in_b) and not (num_in_a & num_in_b)\n        )\n\n        evidence = (\n            \"house_numbers=%s/%s (%s); streets=%s | %s (similarity %.2f); \"\n            \"name_tokens=[%s] vs [%s]; distinctive=[%s] vs [%s]; distinctive_shared=%d; \"\n            \"name_similarity=%.2f; distance_m=%.1f\"\n            % (\n                num_a or \"?\", num_b or \"?\",\n                \"match\" if nums_match else (\"conflict\" if nums_conflict else \"unknown\"),\n                \" \".join(st_a) or \"?\", \" \".join(st_b) or \"?\", street_sim,\n                \" \".join(na) or \"?\", \" \".join(nb) or \"?\",\n                \" \".join(na_distinct) or \"?\", \" \".join(nb_distinct) or \"?\",\n                distinctive_shared, name_sim, dist,\n            )\n        )\n\n        decision = None\n\n        # --- Deterministic rules -------------------------------------------------\n        if same_address:\n            if containment and distinctive_shared and dist <= 300.0:\n                decision = True\n            elif (distinct_containment and not subunit_conflict and dist <= 120.0):\n                # Every distinctive brand word of the shorter name is present in the\n                # other; remaining differences are generic/cuisine descriptors.\n                decision = True\n            elif name_sim >= 0.55 and distinctive_shared:\n                decision = True\n            elif distinctive_shared >= 2 and dist <= 120.0 and not subunit_conflict:\n                decision = True\n            elif na_distinct and nb_distinct and distinctive_shared == 0:\n                # No shared distinctive word at all: separate tenants/units.\n                decision = False\n            elif name_sim < 0.3:\n                decision = False\n            elif dist > 100.0:\n                # Same street address but coordinates far apart => different\n                # units/sections of one large complex.\n                decision = False\n            elif subunit_conflict and name_sim < 0.7:\n                decision = False\n            elif name_sim < 0.45 and dist > 40.0:\n                decision = False\n            # else: same address, near-identical point, partially similar names -> LLM\n        elif nums_conflict or streets_conflict:\n            if (name_sim >= 0.85 and distinctive_shared and dist <= 20.0\n                    and not streets_conflict):\n                decision = None  # same brand, essentially same point, messy numbering\n            else:\n                decision = False\n        else:\n            # Address comparison is inconclusive (missing house number or street).\n            if name_sim >= 0.85 and distinctive_shared and dist <= 250.0:\n                decision = True\n            elif distinct_containment and not subunit_conflict and dist <= 60.0:\n                decision = True\n            elif name_sim < 0.35 or distinctive_shared == 0:\n                decision = False\n            elif dist > 400.0:\n                decision = False\n\n        if decision is None:\n            out = self.adjudicate(\n                input_name=str(in_name),\n                input_address=str(in_addr),\n                match_name=str(m_name),\n                match_address=str(m_addr),\n                distance=dist,\n                name_similarity=round(float(name_sim), 3),\n                evidence=evidence,\n            )\n            raw = out.is_same\n            if isinstance(raw, bool):\n                decision = raw\n            else:\n                decision = str(raw).strip().lower() in (\"true\", \"yes\", \"1\", \"same\", \"y\")\n\n        return dspy.Prediction(is_same=bool(decision))",
+   "program_path": "sweep_programs/flex_penalty_0.2.json"
+  }
+ }
+}
