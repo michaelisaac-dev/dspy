@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import dspy
-from dspy.primitives.code_interpreter import CodeInterpreterError
+from dspy.primitives.code_interpreter import CodeInterpreterError, _create_interpreter
 
 logger = logging.getLogger(__name__)
 
@@ -58,21 +58,22 @@ def _accepts_interpreter_factory(cls: type) -> bool:
         return False
 
 
-def _resolve_signature(signature: Any) -> Any:
+def _resolve_signature(signature: Any, custom_types: dict[str, type] | None = None) -> Any:
     """Turn a shim signature payload back into something a host predictor accepts."""
-    if isinstance(signature, dict) and signature.get(SIGNATURE_MARKER):
-        from dspy.signatures.signature import ensure_signature
+    from dspy.signatures.signature import make_signature
 
-        # marker always carries a string signature; ensure_signature applies instructions if given
-        return ensure_signature(signature["signature"], signature.get("instructions"))
+    if isinstance(signature, dict) and signature.get(SIGNATURE_MARKER):
+        # marker always carries a string signature; make_signature applies instructions if given
+        return make_signature(signature["signature"], signature.get("instructions"), custom_types=custom_types)
+    if isinstance(signature, str):
+        return make_signature(signature, custom_types=custom_types)
     return signature
 
 
-def _signature_key(signature: Any) -> str:
-    """A hashable, stable key for a signature payload (for construction idempotency)."""
-    if isinstance(signature, str):
-        return signature
-    return json.dumps(signature, sort_keys=True, default=str)
+def _construction_key(kind: str, signature: Any, kwargs: dict[str, Any] | None) -> str:
+    """A stable key for a construction request, used for idempotency across repeated ``__init__``
+    runs (see ``_construct``)."""
+    return json.dumps([kind, signature, kwargs or {}], sort_keys=True, default=str)
 
 
 def _jsonable(value: Any) -> Any:
@@ -134,8 +135,7 @@ class BridgeRuntime:
     resolved by name when passed to a bridged sub-predictor; tools authored inside the generated module
     live in the sandbox. A code-executing sub-predictor (RLM/CodeAct/ProgramOfThought)
     gets a fresh interpreter from the same factory, so its inner code runs in the backend chosen for
-    Flex — except a shared bare instance, which it can't reuse (that would shut the session down after
-    ``forward``), so there it falls back to its own default sandbox. See ``_sub_interpreter_factory``.
+    Flex. See ``_sub_interpreter_factory``.
     """
 
     def __init__(self, flex: Any, factory: Callable[[], Any], max_predictor_calls: int | None = 100) -> None:
@@ -145,7 +145,7 @@ class BridgeRuntime:
         self._local = threading.local()
         self._all_interps: list[Any] = []
         self._lock = threading.Lock()
-        self._registry: dict[str, str] = {}  # attr_name -> signature key (host predictors built once)
+        self._registry: dict[str, str] = {}  # attr_name -> construction key
         self._generation = 0
         self._module_src: str | None = None
         self._class_name: str | None = None
@@ -171,7 +171,7 @@ class BridgeRuntime:
             raise CodeInterpreterError("dspy.Flex interpreter has been closed")
         sess: _Session | None = getattr(self._local, "sess", None)
         if sess is None:
-            interp = self._factory()
+            interp = _create_interpreter(self._factory)
             interp.tools.update(self.bridge_tools())
             interp.tools.update(self._tool_callables())  # user tools callable by name in the sandbox
             with self._lock:
@@ -212,7 +212,28 @@ class BridgeRuntime:
                 "Sandboxed forward returned no serializable result; the generated forward must return "
                 f"a dspy.Prediction (got {result!r})"
             )
-        return dspy.Prediction(**json.loads(result))
+        return self._to_prediction(json.loads(result))
+
+    def _to_prediction(self, fields: dict[str, Any]) -> Any:
+        from dspy.adapters.utils import parse_value
+
+        signature = self._flex.signature
+        missing = [name for name in signature.output_fields if name not in fields]
+        if missing:
+            raise CodeInterpreterError(
+                f"Sandboxed forward returned a dspy.Prediction missing declared output field(s) "
+                f"{missing}; the signature declares {list(signature.output_fields)}."
+            )
+        out = dict(fields)
+        for name, field in signature.output_fields.items():
+            try:
+                out[name] = parse_value(out[name], field.annotation)
+            except Exception as e:
+                raise CodeInterpreterError(
+                    f"Sandboxed forward returned {out[name]!r} for output field {name!r}, which is "
+                    f"not a valid {field.annotation}: {e}"
+                ) from e
+        return dspy.Prediction(**out)
 
     def shutdown(self) -> None:
         self._closed = True
@@ -251,11 +272,6 @@ class BridgeRuntime:
         return value
 
     def _sub_interpreter_factory(self) -> Any:
-        """The Flex interpreter factory, handed to a bridged code-executing sub-predictor so its inner
-        code runs in the same backend chosen for Flex. The sub-predictor creates and tears down a fresh
-        interpreter per ``forward`` from this factory, isolating each rollout."""
-        if getattr(self._flex, "_interpreter_shared", False):
-            return None
         return self._factory
 
     def _build_predictor(self, kind: str, signature: Any, kwargs: dict[str, Any] | None) -> Any:
@@ -268,7 +284,7 @@ class BridgeRuntime:
             factory = self._sub_interpreter_factory()
             if factory is not None:
                 extra["interpreter_factory"] = factory
-        return cls(_resolve_signature(signature), **extra)
+        return cls(_resolve_signature(signature, self._flex._flex_ctx.custom_types()), **extra)
 
     def _construct(self, kind: str, signature: Any, attr_name: str, kwargs: dict[str, Any] | None = None) -> str:
         if kind not in BRIDGEABLE_KINDS:
@@ -276,17 +292,17 @@ class BridgeRuntime:
                 f"dspy.{kind} is not supported inside a sandboxed dspy.Flex yet "
                 f"(bridgeable: {', '.join(BRIDGEABLE_KINDS)})"
             )
-        sig_key = _signature_key(signature)
+        key = _construction_key(kind, signature, kwargs)
         with self._lock:
-            if self._registry.get(attr_name) == sig_key and getattr(self._flex, attr_name, None) is not None:
-                return attr_name  # already built with the same signature; reuse (preserves demos)
+            if self._registry.get(attr_name) == key and getattr(self._flex, attr_name, None) is not None:
+                return attr_name  # identical request already built
             predictor = self._build_predictor(kind, signature, kwargs)
             # Attach under attr_name so it keeps a canonical name in named_parameters()/state; the
             # handle IS that name, so _call resolves it with getattr.
             setattr(self._flex, attr_name, predictor)
             if attr_name not in self._flex._attached_names:
                 self._flex._attached_names.append(attr_name)
-            self._registry[attr_name] = sig_key
+            self._registry[attr_name] = key
         return attr_name
 
     def _call(self, handle: str, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
