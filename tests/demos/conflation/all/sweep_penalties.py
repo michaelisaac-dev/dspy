@@ -302,8 +302,11 @@ def plot(data: dict, path: Path | None = None) -> None:
     calls = [x["avg_calls"] for x in t]
     # Wilson 95% CIs, as asymmetric +/- offsets for errorbar().
     ci = [wilson(round(x["accuracy"] * x["n"]), x["n"]) for x in t]
-    acc_err = [[a - lo for a, (lo, _) in zip(acc, ci, strict=True)],
-               [hi - a for a, (_, hi) in zip(acc, ci, strict=True)]]
+    # Wilson intervals are not centred on the point estimate: at accuracy 1.0 the upper bound lands
+    # marginally BELOW 1.0, which yields a negative error bar and matplotlib refuses to draw it.
+    # Clamp the interval to contain the point estimate.
+    acc_err = [[max(0.0, a - lo) for a, (lo, _) in zip(acc, ci, strict=True)],
+               [max(0.0, hi - a) for a, (_, hi) in zip(acc, ci, strict=True)]]
 
     base_by = data.get("baseline", {}).get("by_penalty", {})
     b = base_by.get(keys[0]) if keys else None

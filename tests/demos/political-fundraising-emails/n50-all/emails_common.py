@@ -74,7 +74,10 @@ EXEC_MAX_TOKENS = 2000
 # proposals, and λ=0 returned the base program byte-identical after $3.71. The conflation demo used
 # the same 8000 and was never affected — its reflection outputs ran 1,004–2,769 tokens (13–35% of
 # cap) because its reflective dataset holds short records, not four full ~650-token emails.
-REFLECTION_MAX_TOKENS = 24000
+# Raised 24000 -> 32000: the λ=0 run peaked at 21,714 completion tokens (90% of the 24k cap),
+# and penalized runs emit LONGER programs (deterministic parsing logic on top of the prompt).
+# Truncation here is silent and catastrophic — it produced unparseable code that scored 0.
+REFLECTION_MAX_TOKENS = 32000
 
 
 def make_lms(exec_max_tokens: int = EXEC_MAX_TOKENS,
@@ -93,15 +96,22 @@ def disable_cache() -> None:
 
 
 class IdentifyCommittee(dspy.Signature):
-    """Identify the political committee that sponsored a fundraising email.
+    """Identify the political committee that sponsored a fundraising email."""
 
-    The committee's name is present in the email text itself, so most emails can be resolved
-    deterministically in code with no model call; reserve a model call only as a fallback for
-    emails the code cannot resolve.
-    """
-
-    email_body: str = dspy.InputField(desc="Full parsed text of the political fundraising email.")
-    committee: str = dspy.OutputField(desc="Legal name of the sponsoring political committee.")
+    # Deliberately MINIMAL — one line, no hints.
+    #
+    # The original seed carried a second paragraph: "The committee's name is present in the email
+    # text itself, so most emails can be resolved deterministically in code with no model call;
+    # reserve a model call only as a fallback." That is two problems at once. It leaks a substantive
+    # task hint (it turns an inference problem into a copy-from-text problem), and it is guidance
+    # aimed at GEPA that was landing in the *execution* prompt. Together they put the un-optimized
+    # baseline at 91% test / 97.5% on GEPA's val slice — leaving the optimizer ~1 example of
+    # headroom, so it could not demonstrate any prompt improvement at λ=0.
+    #
+    # The decomposition objective still reaches GEPA, through the metric feedback ("Target: return
+    # the correct committee with a DETERMINISTIC, no-LLM algorithm..."), which is where it belongs.
+    email_body: str = dspy.InputField()
+    committee: str = dspy.OutputField()
 
 
 # ---------------------------------------------------------------------------
@@ -142,7 +152,9 @@ def pred_committee(prediction) -> str:
 # Data
 # ---------------------------------------------------------------------------
 
-N_GEPA_VAL = 20    # held out of the train pool for GEPA candidate selection
+# 20 was too small: at λ=0.2 GEPA scored 0.89 on its val set and 0.79 on the 100 held-out
+# emails — an 11-point generalization gap, because selection granularity was 1/20 = 0.05.
+N_GEPA_VAL = 40    # held out of the train pool for GEPA candidate selection
 N_TRAIN_HOLDOUT = 50  # held out of train.jsonl and added to the test set, purely for power
 
 
@@ -185,6 +197,16 @@ def load_splits(seed: int = 0) -> tuple[list, list, list]:
 
     holdout = [_to_example(r, "train_holdout") for r in train_rows[:N_TRAIN_HOLDOUT]]
     remaining = train_rows[N_TRAIN_HOLDOUT:]
+
+    # Re-randomize before splitting val/train. Taking a CONTIGUOUS slice of the already-shuffled
+    # list drew a pathologically easy val set: 1 error in 40 (97.5%) against a pool rate of 9/98
+    # (90.8%) and a test rate of 89.0% — a ~1-in-20 draw. That left GEPA's entire candidate-
+    # selection signal with one fixable example, so a 4-6pp improvement was invisible to it and it
+    # returned the base program. An independent shuffle puts the val slice at 4 errors / 0.900,
+    # matching the pool and the test set. The test split is untouched by this and no model output
+    # is used to build it.
+    random.Random(seed + 1_000).shuffle(remaining)
+
     gepa_val = [_to_example(r, "gepa_val") for r in remaining[:N_GEPA_VAL]]
     gepa_train = [_to_example(r, "gepa_train") for r in remaining[N_GEPA_VAL:]]
     test = [_to_example(r, "val_jsonl") for r in val_rows] + holdout

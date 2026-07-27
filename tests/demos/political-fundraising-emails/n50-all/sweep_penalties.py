@@ -47,7 +47,10 @@ PLOT_PATH = DEMO_DIR / "cal_frontier.png"
 PROGRAM_DIR = DEMO_DIR / "sweep_programs"
 
 DEFAULT_PENALTIES = [0.0, 0.05, 0.1, 0.2, 0.4]
-DEFAULT_MAX_METRIC_CALLS = 250
+# 600 was wasteful on this dataset: GEPA hit a perfect val score (40/40) at iteration 2 and
+# then spent ~430 further rollouts proposing candidates it could not rank. With 148 usable
+# training rows and a ~90% baseline, a 40-row val slice saturates after ~4 corrections.
+DEFAULT_MAX_METRIC_CALLS = 200
 REFLECTION_MINIBATCH = 4
 EVAL_THREADS = 8
 
@@ -101,7 +104,7 @@ def program_dir_for(out: Path) -> Path:
 
 
 def run_penalty(penalty, train, val, test, max_metric_calls, exec_lm, reflection_lm, threads,
-                program_dir: Path = PROGRAM_DIR):
+                program_dir: Path = PROGRAM_DIR, log_dir: Path | None = None):
     """Optimize at one penalty and evaluate the result. Returns a JSON-ready dict."""
     program = dspy.Flex(IdentifyCommittee)
     baseline_src = program.module_src
@@ -115,6 +118,15 @@ def run_penalty(penalty, train, val, test, max_metric_calls, exec_lm, reflection
             reflection_minibatch_size=REFLECTION_MINIBATCH,
             num_threads=threads,
             seed=0,
+            # Checkpoint every candidate: compile() only returns (and only then does the program get
+            # saved) at the very end, so killing a long run previously threw away everything it had
+            # found. With log_dir, a stopped run leaves its candidates on disk.
+            log_dir=str(log_dir) if log_dir else None,
+            # At λ=0 the score IS accuracy, the baseline is ~92%, and a 4-email minibatch is
+            # all-correct ~72% of the time — so the default (True) skipped 32 of 43 iterations and
+            # GEPA never optimized anything. Only affects λ=0: at λ>0 an LLM call costs λ, so no
+            # minibatch containing a call can score perfectly.
+            skip_perfect_score=False,
         ).compile(program, trainset=train, valset=val)
     opt_wall_s = time.perf_counter() - started
 
@@ -167,6 +179,7 @@ def main() -> None:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "exec_model": EXEC_MODEL, "reflection_model": REFLECTION_MODEL,
         "max_metric_calls": args.max_metric_calls, "reflection_minibatch": REFLECTION_MINIBATCH,
+        "skip_perfect_score": False, "reflection_max_tokens": 24000,
         "eval_threads": args.threads,
         "n_train": len(train), "n_val": len(val), "n_test": len(test),
         "test_composition": "val.jsonl (50, held out by the original demo) + 50 rows held out of train.jsonl",
@@ -206,7 +219,8 @@ def main() -> None:
             continue
         print(f"\n=== penalty {key}  (max_metric_calls={args.max_metric_calls}) ===")
         runs[key] = run_penalty(penalty, train, val, test, args.max_metric_calls,
-                                exec_lm, reflection_lm, args.threads, program_dir_for(args.out))
+                                exec_lm, reflection_lm, args.threads, program_dir_for(args.out),
+                                program_dir_for(args.out).parent / f"gepa_log_{key}")
         args.out.write_text(json.dumps(data, indent=1), encoding="utf-8")  # write after every λ
         r = runs[key]
         print("  " + fmt(r["test"]))
@@ -288,8 +302,11 @@ def plot(data: dict, path: Path | None = None) -> None:
     lat = [x["latency_mean_s"] * 1000 for x in t]
     calls = [x["avg_calls"] for x in t]
     ci = [wilson(round(x["accuracy"] * x["n"]), x["n"]) for x in t]
-    acc_err = [[a - lo for a, (lo, _) in zip(acc, ci, strict=True)],
-               [hi - a for a, (_, hi) in zip(acc, ci, strict=True)]]
+    # Wilson intervals are not centred on the point estimate: at accuracy 1.0 the upper bound lands
+    # marginally BELOW 1.0, which yields a negative error bar and matplotlib refuses to draw it.
+    # Clamp the interval to contain the point estimate.
+    acc_err = [[max(0.0, a - lo) for a, (lo, _) in zip(acc, ci, strict=True)],
+               [max(0.0, hi - a) for a, (_, hi) in zip(acc, ci, strict=True)]]
 
     base_by = data.get("baseline", {}).get("by_penalty", {})
     b = base_by.get(keys[0]) if keys else None
@@ -305,9 +322,14 @@ def plot(data: dict, path: Path | None = None) -> None:
         ax.errorbar(xs, acc, yerr=acc_err, color=C_OPT, linewidth=2, marker="o", markersize=8,
                     markeredgecolor=SURFACE, markeredgewidth=2, elinewidth=1.2, capsize=4,
                     ecolor=C_OPT, zorder=3, label="GEPA-optimized (95% CI)")
+        # Penalized points cluster in the cheap corner at near-identical accuracy, so a fixed
+        # offset overprints their labels into unreadable mush. Stagger by index.
+        offsets = [(9, -3), (9, 9), (9, -14), (-9, 9), (-9, -14)]
         for i in range(len(xs)):
+            dx, dy = offsets[i % len(offsets)]
             ax.annotate(f"λ={lam[i]:g}", (xs[i], acc[i]), textcoords="offset points",
-                        xytext=(9, -3), fontsize=8.5, color=INK_2, zorder=4)
+                        xytext=(dx, dy), fontsize=8.5, color=INK_2, zorder=4,
+                        ha=("left" if dx > 0 else "right"))
         if b is not None:
             ax.plot([base_x], [b["accuracy"]], color=C_BASE, marker="s", markersize=9,
                     markeredgecolor=SURFACE, markeredgewidth=2, linestyle="none",
