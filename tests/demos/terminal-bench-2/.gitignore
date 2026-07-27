@@ -1,0 +1,7 @@
+# The Terminal-Bench 2.0 checkout is ~80 MB even with LFS blobs skipped, and it is reproducible
+# byte-for-byte from `python fetch_data.py`. The manifest it derives is equally reproducible.
+tb2_data/
+
+# Per-episode resume log. Useful locally, meaningless to anyone else: its keys are hashes of the
+# harness source produced by one particular GEPA run.
+episodes.jsonl
