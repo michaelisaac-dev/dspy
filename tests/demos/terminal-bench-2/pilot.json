@@ -1,0 +1,98 @@
+{
+ "anthropic/claude-sonnet-5": {
+  "summary": {
+   "n": 2,
+   "penalty": 0.0,
+   "step_budget": 30,
+   "score": 1.0,
+   "resolve_rate": 1.0,
+   "n_resolved": 2,
+   "avg_calls": 12.0,
+   "calls_total": 24,
+   "avg_commands": 19.0,
+   "avg_failed_commands": 2.5,
+   "frac_episodes_using_llm": 1.0,
+   "cost_usd_total": 1.664766,
+   "cost_usd_per_task": 0.832383,
+   "cost_usd_per_100_tasks": 83.2383,
+   "latency_mean_s": 231.31092566699954,
+   "latency_p50_s": 34.536499750000075,
+   "latency_p95_s": 428.085351583999,
+   "verify_mean_s": 7.976448333502049,
+   "prompt_tokens": 342347,
+   "completion_tokens": 42515,
+   "deadline_hits": 0,
+   "errors": 0,
+   "first_error": null,
+   "by_difficulty": {
+    "easy": {
+     "n": 1,
+     "resolve_rate": 1.0,
+     "avg_calls": 5.0,
+     "cost_usd_per_task": 0.082101
+    },
+    "medium": {
+     "n": 1,
+     "resolve_rate": 1.0,
+     "avg_calls": 19.0,
+     "cost_usd_per_task": 1.582665
+    }
+   },
+   "by_category": {
+    "mathematics": {
+     "n": 1,
+     "resolve_rate": 1.0,
+     "avg_calls": 19.0,
+     "cost_usd_per_task": 1.582665
+    },
+    "software-engineering": {
+     "n": 1,
+     "resolve_rate": 1.0,
+     "avg_calls": 5.0,
+     "cost_usd_per_task": 0.082101
+    }
+   },
+   "wall_s": 439.40117674999783,
+   "threads": 2,
+   "wall_min": 7.323354857649974
+  },
+  "records": [
+   {
+    "task": "largest-eigenval",
+    "difficulty": "medium",
+    "category": "mathematics",
+    "resolved": true,
+    "n_calls": 19,
+    "n_commands": 35,
+    "n_failed_commands": 5,
+    "deadline_hit": false,
+    "latency_s": 428.085351583999,
+    "verify_s": 3.2257201250031358,
+    "cost_usd": 1.582665,
+    "prompt_tokens": 330105,
+    "completion_tokens": 39490,
+    "summary": "Implemented an optimized find_dominant_eigenvalue_and_eigenvector in /app/eigen.py.\n\nApproach:\n- Installed scipy (not present by default) to get access to raw LAPACK bindings via scipy.linalg.lapack.dgeev, which has much lower Python-level overhead than np.linalg.eig for small matrices.\n- Key optimization: since the input array A is C-contiguous, A.T is a zero-copy Fortran-order VIEW representing A^T. Calling dgeev on this view with compute_vl=1 (left eigenvectors) avoids the internal copy that scipy would otherwise need to perform to convert A into Fortran order for LAPACK.\n- Used the mathematical identity: if u is a left eigenvector of B=A^T with eigenvalue lambda_B (i.e. u^H @ B = lambda_B * u^H), then taking the conjugate transpose gives B^T @ u = conj(lambda_B) * u, and since B^T = A,\n...[1207 characters omitted]...\n eigenval * eigenvec) holds).\n- Ran the official /app/eval.py three times; each run passed all correctness assertions and showed the new implementation consistently faster than the reference np.linalg.eig-based solution across all sizes (2, 4, 6, 8, 10), with speedups ranging roughly from ~5% (at size 10) to ~40% (at size 2).\n\nFinal file /app/eigen.py contains the finalized, tested implementation.",
+    "verifier_tail": "Collecting pytest==8.4.1\n  Downloading pytest-8.4.1-py3-none-any.whl.metadata (7.7 kB)\nCollecting pytest-json-ctrf==0.3.5\n  Downloading pytest_json_ctrf-0.3.5-py3-none-any.whl.metadata (3.3 kB)\nCollecting iniconfig>=1 (from pytest==8.4.1)\n  Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)\nCollecting packaging>=20 (from pytest==8.4.1)\n  Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)\nCollecting pluggy<2,>=1.5 (from pytest==8.4.1)\n  Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)\nCollecting pygments>=2.7.2 (from pytest==8.4.1)\n  Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)\nDownloading pytest-8.4.1-py3-none-any.whl (365 kB)\nDownloading pytest_json_ctrf-0.3.5-py3-none-any.whl (6.8 kB)\nDownloading pluggy-1.6.0-py3-none-any.whl (20 kB)\nDownloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)\nDownloading packaging-26.2-py3-none-any.whl (100 kB)\nDownloading pygments-2.20.0-py3-none-any.whl (1.2 MB)\n   \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501 1.2/1.2 MB 30.0 MB/s  0:00:00\nInstalling collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf\n\nSuccessfully installed iniconfig-2.3.0 packaging-26.2 pluggy-1.6.0 pygments-2.20.0 pytest-8.4.1 pytest-json-ctrf-0.3.5\nWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.\n\n[notice] A new release of pip is available: 25.2 -> \n...[1532 characters omitted]...\nPASSED ../tests/test_outputs.py::test_dominance_eigenvalue[6]\nPASSED ../tests/test_outputs.py::test_dominance_eigenvalue[7]\nPASSED ../tests/test_outputs.py::test_dominance_eigenvalue[8]\nPASSED ../tests/test_outputs.py::test_dominance_eigenvalue[9]\nPASSED ../tests/test_outputs.py::test_dominance_eigenvalue[10]\nPASSED ../tests/test_outputs.py::test_speedup[2]\nPASSED ../tests/test_outputs.py::test_speedup[3]\nPASSED ../tests/test_outputs.py::test_speedup[4]\nPASSED ../tests/test_outputs.py::test_speedup[5]\nPASSED ../tests/test_outputs.py::test_speedup[6]\nPASSED ../tests/test_outputs.py::test_speedup[7]\nPASSED ../tests/test_outputs.py::test_speedup[8]\nPASSED ../tests/test_outputs.py::test_speedup[9]\nPASSED ../tests/test_outputs.py::test_speedup[10]\n============================== 27 passed in 1.16s ==============================",
+    "error": null
+   },
+   {
+    "task": "prove-plus-comm",
+    "difficulty": "easy",
+    "category": "software-engineering",
+    "resolved": true,
+    "n_calls": 5,
+    "n_commands": 3,
+    "n_failed_commands": 0,
+    "deadline_hit": false,
+    "latency_s": 34.536499750000075,
+    "verify_s": 12.727176542000961,
+    "cost_usd": 0.082101,
+    "prompt_tokens": 12242,
+    "completion_tokens": 3025,
+    "summary": "Fixed the incomplete proof in /workspace/plus_comm.v.\n\nThe original file had an induction-based proof of `forall n m : nat, n + m = m + n` with two `admit` placeholders:\n1. Base case (n = 0): goal was `m = m + 0`.\n2. Inductive case: goal was `S (n' + m) = m + S n'`.\n\nI completed the proof as follows:\n\nRequire Import Arith.\n\nTheorem plus_comm : forall n m : nat,\n  n + m = m + n.\nProof.\n  intros n m.\n  induction n as [|n' IHn'].\n  - simpl.\n    rewrite <- plus_n_O.\n    reflexivity.\n  - simpl.\n    rewrite IHn'.\n    rewrite <- plus_n_Sm.\n    reflexivity.\nQed.\n\nFor the base case, I used `plus_n_O` (n = n + 0) to rewrite the goal and close it by reflexivity. For the inductive case, I rewrote using the inductive hypothesis `IHn'` (n' + m = m + n') and then used `plus_n_Sm` (n + S m = S (n + m)) to align both sides, closing with reflexivity.\n\nThe completed proof was compiled with `coqc plus_comm.v`, which succeeded (exit code 0, printed COMPILE_OK) and produced the compiled file /workspace/plus_comm.vo (14509 bytes).",
+    "verifier_tail": "Get:1 http://security.ubuntu.com/ubuntu noble-security InRelease [126 kB]\nGet:2 http://archive.ubuntu.com/ubuntu noble InRelease [256 kB]\nGet:3 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]\nGet:4 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]\nGet:5 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1097 kB]\nGet:6 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]\nGet:7 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1521 kB]\nGet:8 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1557 kB]\nGet:9 http://archive.ubuntu.com/ubuntu noble/main amd64 Packages [1808 kB]\nGet:10 http://archive.ubuntu.com/ubuntu noble/universe amd64 Packages [19.3 MB]\nGet:11 http://archive.ubuntu.com/ubuntu noble/restricted amd64 Packages [117 kB]\nGet:12 http://archive.ubuntu.com/ubuntu noble/multiverse amd64 Packages [331 kB]\nGet:13 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]\nGet:14 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1700 kB]\nGet:15 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2135 kB]\nGet:16 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1433 kB]\nGet:17 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]\nGet:18 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]\nGet:19 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [37.7 kB]\nFetched 31.8 MB in 3s (11.0 MB/s)\nReading package lists...\nReading package lists...\nBuildin\n...[1532 characters omitted]...\nwnloading pygments (1.2MiB)\n Downloading pygments\nInstalled 6 packages in 16ms\n============================= test session starts ==============================\nplatform linux -- Python 3.13.9, pytest-8.4.1, pluggy-1.6.0\nrootdir: /tests\nplugins: json-ctrf-0.3.5\ncollected 4 items\n\n../tests/test_outputs.py ....                                            [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED ../tests/test_outputs.py::test_proof_file_exists\nPASSED ../tests/test_outputs.py::test_compiled_proof_exists\nPASSED ../tests/test_outputs.py::test_proof_contents\nPASSED ../tests/test_outputs.py::test_compiled_proof_content\n============================== 4 passed in 0.27s ===============================",
+    "error": null
+   }
+  ]
+ }
+}

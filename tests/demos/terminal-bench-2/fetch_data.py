@@ -30,7 +30,10 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-import tomllib
+try:  # tomllib is stdlib from 3.11; this repo's venv is 3.10, where tomli is the backport
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - depends on interpreter version
+    import tomli as tomllib
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 

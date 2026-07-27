@@ -804,6 +804,114 @@ def make_metric(llm_call_penalty: float, step_budget: int = STEP_BUDGET):
     return metric
 
 
+def make_resolve_metric(step_budget: int = STEP_BUDGET):
+    """Score = did the task's verifier pass. Nothing else is charged.
+
+    This is the CAPABILITY objective, as opposed to `make_metric`'s cost objective. There is no
+    penalty term and no reference to LLM calls in the goal, because the question here is not "can
+    the harness do this more cheaply" but "what is the harness missing that would let it solve more
+    tasks". Those pull in opposite directions: the cost objective rewards *thinking less*, and a
+    terminal agent that thinks less mostly gives up earlier.
+
+    The feedback is therefore restructured around diagnosis rather than accounting. It still shows
+    the transcript and the verifier output -- a harness can only be improved from evidence -- but the
+    directive asks the optimizer to name the missing capability and build it into the harness as a
+    reusable part, instead of asking it to spend fewer calls.
+
+    What the optimizer can actually build (it rewrites the harness module, nothing else):
+      * reusable Python helpers composed over the three container tools;
+      * additional sub-predictors with their own signatures, for sub-problems worth isolating;
+      * loop structure, retries, error handling, and a self-check before returning.
+    It cannot add new host tools, and it can never see or touch the verifier.
+
+    `step_budget` is unused and kept only so the two factories share a signature; the sweep driver
+    selects between them.
+    """
+
+    def metric(gold, pred, trace=None, pred_name=None, pred_trace=None, program_trace=None) -> ScoreWithFeedback:
+        exec_trace = program_trace if program_trace is not None else trace
+        n_calls = len(exec_trace) if exec_trace else 0
+
+        resolved = bool(getattr(pred, "resolved", False))
+        score = 1.0 if resolved else 0.0
+
+        n_commands = int(getattr(pred, "n_commands", 0) or 0)
+        n_failed = int(getattr(pred, "n_failed_commands", 0) or 0)
+        digest = str(getattr(pred, "transcript_digest", "") or "")
+        verifier_tail = str(getattr(pred, "verifier_tail", "") or "")
+        harness_error = getattr(pred, "harness_error", None)
+        deadline_hit = bool(getattr(pred, "deadline_hit", False))
+
+        if getattr(pred, "infra_error", False):
+            return ScoreWithFeedback(
+                score=0.0,
+                feedback=("INFRASTRUCTURE FAILURE, not a harness failure: the container never "
+                          f"started ({harness_error}). Ignore this example; it says nothing about "
+                          "the harness code."),
+            )
+
+        # Reported as context. Not scored -- but not free either, which the goal text is careful
+        # about: calling them "free" invites loops that burn the episode clock and then miss the
+        # deadline, which lowers the resolve rate this metric exists to raise.
+        budget = (f"{n_calls} model call(s), {n_commands} shell command(s) ({n_failed} nonzero exit)"
+                  f" -- not counted against the score; the verifier alone decides it")
+
+        goal = (
+            "OBJECTIVE: solve more tasks. The verifier alone decides the score: model calls and "
+            "shell commands are not counted against you, so do not optimise for using fewer. They "
+            "are not unlimited either -- the episode has a wall-clock budget and a hard ceiling of "
+            f"{MAX_PREDICTOR_CALLS} model calls -- so spend them where they buy information or "
+            "progress, and not on repeating something that already failed.\n"
+            "When an episode fails, the useful question is what CAPABILITY the harness lacked. "
+            "Diagnose the gap and build the fix into the harness so "
+            "it generalises to tasks you have not seen:\n"
+            "  - turn anything you find yourself doing ad hoc into a reusable helper over the three "
+            "tools (reconnaissance, locating files, running a command and checking its exit code, "
+            "installing a missing dependency, applying an edit and confirming it took);\n"
+            "  - isolate a hard sub-problem into its own sub-predictor with its own instructions "
+            "when one round of reasoning is not enough;\n"
+            "  - check your own work before returning -- run the thing you just built, read the "
+            "error, and fix it, rather than reporting success unverified;\n"
+            "  - make failures recoverable: read what a command actually printed, and try a "
+            "different approach instead of repeating one that already failed.\n"
+            "What to look at first, how to structure the loop, and when to stop is for you to work "
+            "out from the transcripts."
+        )
+
+        head: str
+        if harness_error and not resolved:
+            head = (f"The harness RAISED before finishing ({budget}). Error: {harness_error}. This is "
+                    f"a bug in the harness, and the most straightforward kind to remove: catch "
+                    f"tool errors, check the strings the tools return, and always return "
+                    f"dspy.Prediction(summary=<str>).")
+        elif deadline_hit and not resolved:
+            head = (f"FAILED by running out of wall clock ({budget}). Time, not model calls, is the "
+                    f"binding resource: the episode was cut off mid-task. Reach a working state "
+                    f"early and improve it, rather than exploring for a long time and committing "
+                    f"late.")
+        elif not resolved and n_commands == 0:
+            head = (f"FAILED having run NO commands at all ({budget}) -- the worst outcome, because "
+                    f"nothing was attempted in the container. The harness must actually call "
+                    f"terminal_exec/write_file with session=<the session input>.")
+        elif not resolved:
+            head = (f"FAILED: the task's verifier returned 0 ({budget}). Work happened, but it did "
+                    f"not satisfy the hidden tests. Compare what the verifier below checked against "
+                    f"what the transcript actually did -- the gap between them is the capability to "
+                    f"add.")
+        else:
+            head = (f"SOLVED ({budget}). Keep whatever produced this. If it relied on something ad "
+                    f"hoc, make it a reusable part of the harness so it survives on other tasks.")
+
+        parts = [head, "", "What the harness did, in order:", digest]
+        if verifier_tail:
+            parts += ["", "What the verifier said (the harness never sees this during the episode):",
+                      _clip(verifier_tail, 1800)]
+        parts += ["", goal]
+        return ScoreWithFeedback(score=score, feedback="\n".join(parts))
+
+    return metric
+
+
 # ---------------------------------------------------------------------------
 # Cost accounting
 # ---------------------------------------------------------------------------

@@ -55,6 +55,7 @@ from tb2_common import (  # noqa: E402
     load_splits,
     make_lms,
     make_metric,
+    make_resolve_metric,
     meter,
     new_harness,
     reap_orphans,
@@ -134,6 +135,7 @@ def program_dir_for(out: Path) -> Path:
 
 
 def run_penalty(penalty, train, val, test, max_metric_calls, exec_lm, reflection_lm, threads,
+                objective: str = "penalty",
                 program_dir: Path = PROGRAM_DIR, log_dir: Path | None = None,
                 cache: EpisodeCache | None = None, episode_timeout_s: float = EPISODE_TIMEOUT_S):
     """Optimize the harness at one penalty and evaluate it. Returns a JSON-ready dict."""
@@ -143,7 +145,7 @@ def run_penalty(penalty, train, val, test, max_metric_calls, exec_lm, reflection
     started = time.perf_counter()
     with meter(exec_lm, reflection_lm) as opt_cost:
         optimized = dspy.GEPA(
-            metric=make_metric(penalty),
+            metric=(make_resolve_metric() if objective == "resolve" else make_metric(penalty)),
             reflection_lm=reflection_lm,
             max_metric_calls=max_metric_calls,
             reflection_minibatch_size=REFLECTION_MINIBATCH,
@@ -179,11 +181,23 @@ def run_penalty(penalty, train, val, test, max_metric_calls, exec_lm, reflection
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--objective", choices=("penalty", "resolve"), default="penalty",
+                    help="'penalty' sweeps the LLM-call cost objective (the original design). "
+                         "'resolve' optimises ONLY the Terminal-Bench verifier pass rate -- no cost "
+                         "term, and feedback that asks what capability the harness is missing "
+                         "rather than how to be cheaper. Forces a single run at lambda=0.")
     ap.add_argument("--penalties", type=float, nargs="+", default=DEFAULT_PENALTIES)
     ap.add_argument("--max-metric-calls", type=int, default=DEFAULT_MAX_METRIC_CALLS)
     ap.add_argument("--threads", type=int, default=EVAL_THREADS)
     ap.add_argument("--episode-timeout", type=float, default=EPISODE_TIMEOUT_S,
                     help="wall-clock ceiling per episode, in seconds")
+    ap.add_argument("--train-limit", type=int, default=0,
+                    help="use only the first N GEPA train tasks (0 = all 24). Like --test-limit, "
+                         "this makes the run a scoped exercise rather than a measurement.")
+    ap.add_argument("--val-limit", type=int, default=0,
+                    help="use only the first N GEPA val tasks (0 = all 20). The val split is what "
+                         "GEPA selects candidates on, and every accepted candidate costs one "
+                         "episode per val task -- so this is the main lever on compile cost.")
     ap.add_argument("--test-limit", type=int, default=0,
                     help="evaluate on only the first N test tasks (0 = all 45). For a cheap dry run "
                          "of the whole pipeline; a truncated test set is NOT a reportable result and "
@@ -198,6 +212,10 @@ def main() -> None:
     # --out made `program_path.relative_to(DEMO_DIR)` raise in the emails demo AFTER a full GEPA
     # compile had run -- losing the run's metrics to a bookkeeping line.
     args.out = args.out.resolve()
+    if args.objective == "resolve":
+        # There is no penalty to sweep: the objective is the verifier pass rate alone. lambda=0
+        # keeps the record shape (score == resolve_rate) so the table, figure and JSON all work.
+        args.penalties = [0.0]
 
     if args.plot_only:
         plot(json.loads(args.out.read_text(encoding="utf-8")), plot_path_for(args.out))
@@ -214,9 +232,15 @@ def main() -> None:
     exec_lm, reflection_lm = make_lms()
     dspy.configure(lm=exec_lm)
     train, val, test = load_splits()
+    if args.train_limit:
+        train = train[: args.train_limit]
+    if args.val_limit:
+        val = val[: args.val_limit]
     if args.test_limit:
         test = test[: args.test_limit]
-        print(f"!! --test-limit {args.test_limit}: this is a pipeline dry run, not a measurement")
+    if args.train_limit or args.val_limit or args.test_limit:
+        print(f"!! scoped run (train={len(train)} val={len(val)} test={len(test)}): "
+              f"a pipeline exercise, not a measurement")
     print(f"splits: gepa_train={len(train)} gepa_val={len(val)} test={len(test)}")
     cache = None if args.no_episode_cache else EpisodeCache(EPISODES_PATH)
     if cache:
@@ -228,11 +252,14 @@ def main() -> None:
         "exec_model": EXEC_MODEL, "reflection_model": REFLECTION_MODEL,
         "max_metric_calls": args.max_metric_calls, "reflection_minibatch": REFLECTION_MINIBATCH,
         "skip_perfect_score": False,
+        "objective": args.objective,
         "step_budget": STEP_BUDGET, "max_predictor_calls": MAX_PREDICTOR_CALLS,
         "episode_timeout_s": args.episode_timeout,
         "eval_threads": args.threads,
         "n_train": len(train), "n_val": len(val), "n_test": len(test),
         "test_limit": args.test_limit or None,
+        "train_limit": args.train_limit or None,
+        "val_limit": args.val_limit or None,
         "benchmark": "Terminal-Bench 2.0 (89 tasks), harbor-framework/terminal-bench-2",
         "split_rule": "stratified by difficulty: 50% test, 22% gepa_val, remainder gepa_train",
         "cache": "disabled (dspy disk + memory)",
@@ -285,7 +312,7 @@ def main() -> None:
             continue
         print(f"\n=== penalty {key}  (max_metric_calls={args.max_metric_calls}) ===")
         runs[key] = run_penalty(penalty, train, val, test, args.max_metric_calls,
-                                exec_lm, reflection_lm, args.threads, program_dir_for(args.out),
+                                exec_lm, reflection_lm, args.threads, args.objective, program_dir_for(args.out),
                                 program_dir_for(args.out).parent / f"gepa_log_{key}",
                                 cache=cache, episode_timeout_s=args.episode_timeout)
         args.out.write_text(json.dumps(data, indent=1), encoding="utf-8")  # write after every lambda
