@@ -6,7 +6,8 @@ binary classification. Same question: does penalizing LLM calls inside a GEPA ob
 
 **Short answer — and it differs sharply from conflation.** The penalty is a **switch, not a dial**:
 
-- **λ=0** (calls free) — GEPA optimizes the *prompt only*, leaves 1.000 calls/email, and reaches
+- **λ=0** (calls free) — GEPA keeps 1.000 calls/email but restructures the signature (adds a
+  Python-extracted `disclaimer_snippets` input and a `Reasoning:` output), and reaches
   **100% accuracy** (McNemar p=0.002 vs baseline). It buys that with **2× the cost and 2.4× the
   latency** of the un-optimized baseline.
 - **Any λ > 0** — the program collapses to near-zero LLM calls (1.000 → 0.02–0.11) at **6–35× lower
@@ -117,11 +118,29 @@ truncation destroyed an entire run (§7).
 
 *Regenerate with `python sweep_penalties.py --plot-only` (reads the JSON, no API calls).*
 
-### 3.1 λ=0: a pure prompt win, and it is total
+### 3.1 λ=0: not a pure prompt win — a hybrid
 
-GEPA left `calls/email` at exactly 1.000 and rewrote only the prompt embedded in the module code —
-teaching the model to look for the FEC *"Paid for by"* disclaimer. Result: **100/100**, McNemar
-**p=0.002 with 10 fixes and 0 regressions**.
+GEPA left `calls/email` at exactly 1.000, so every email still reaches the LLM. But it did more than
+rewrite the prompt: it **restructured the signature on both sides**.
+
+```
+baseline:  Email Body:                        ->  Committee:
+λ=0:       Email Body:, Disclaimer Snippets:  ->  Reasoning:, Committee:
+```
+
+- **New input `disclaimer_snippets`** — Python regex pulls ~220 characters around every
+  "Paid for by"-style phrase and passes them as pre-extracted evidence.
+- **New output `Reasoning:`** — an explicit chain-of-thought step before the answer.
+- **A 2,124-character instruction** encoding domain rules: the disclaimer convention, "never a
+  donation platform (ActBlue, WinRed, Anedot)", and output rules. One of them is exactly the fix the
+  error analysis predicted — *"If the disclaimer uses an acronym, output ONLY that acronym … Never
+  output a form like 'Full Name (ACRONYM)'"* — which kills the `NRSC (National Republican Senatorial
+  Committee)` error class.
+
+So λ=0 **does** run Python; it runs it *before* the LLM as evidence extraction rather than *instead
+of* it. The penalty at λ>0 flips that same logic from evidence into answer.
+
+Result: **100/100**, McNemar **p=0.002 with 10 fixes and 0 regressions**.
 
 This survived four attempts to discredit it:
 
@@ -132,8 +151,17 @@ This survived four attempts to discredit it:
 | Does it handle unseen committees? | Yes — the `val.jsonl` half is also 100%, and 19/39 of its committees never appear in training |
 | Truncated? | No — 0 truncated calls, peak 21,714 of a 24,000 cap |
 
-The cost is real, though: **$2.80/1k vs $1.40 and 2686 ms vs 1140 ms**. The optimized prompt is
-longer, so perfect accuracy was bought at 2× spend and 2.4× latency.
+The cost is real: **$2.80/1k vs $1.40 and 2686 ms vs 1140 ms**. The 2× is an even split between the
+two structural additions, per-email:
+
+| | baseline | λ=0 | change | $/1k impact |
+|---|---|---|---|---|
+| prompt tokens | 1272 | 1974 | +702 (1.55×) | +$0.702 |
+| completion tokens | 25.4 | 164.8 | **+139 (6.5×)** | +$0.697 |
+
+The `disclaimer_snippets` evidence drives the prompt growth; the `Reasoning:` field drives the
+completion growth. Because Haiku output costs 5× input ($5 vs $1 per Mtok), the 139 extra output
+tokens cost as much as the 702 extra input tokens — **50/50**, not a prompt-length story.
 
 ### 3.2 Any nonzero penalty is a cliff, not a slope
 
