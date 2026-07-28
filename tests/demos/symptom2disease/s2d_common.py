@@ -347,8 +347,14 @@ class Record(NamedTuple):
     error: str | None
 
 
-def run_program(program: dspy.Module, dataset: list, threads: int = 8) -> tuple[list[Record], dict]:
-    """Run `program` over `dataset`, returning per-example records plus wall-clock metadata."""
+def run_program(program: dspy.Module, dataset: list, threads: int = 8,
+                canonical_fn=None) -> tuple[list[Record], dict]:
+    """Run `program` over `dataset`, returning per-example records plus wall-clock metadata.
+
+    `canonical_fn` overrides the label matcher, so a run over a different label set (the
+    metaharness/ comparison uses the paper's 22 classes) reuses this loop instead of copying it.
+    """
+    to_label = canonical_fn or canonical
 
     def run_one(ex) -> Record:
         started = time.perf_counter()
@@ -366,7 +372,7 @@ def run_program(program: dspy.Module, dataset: list, threads: int = 8) -> tuple[
                 c_tok += c
                 cost += price(model, p, c)
             raw = pred_disease(out)
-            pred = canonical(raw)
+            pred = to_label(raw)
             return Record(ex.disease, pred, raw, pred == ex.disease, len(trace),
                           elapsed, cost, p_tok, c_tok, None)
         except Exception as exc:

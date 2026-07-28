@@ -10,7 +10,9 @@ import sys
 
 def analyse(path: str, label: str = "") -> None:
     txt = open(path, errors="ignore").read().replace("\r", "\n")
-    for section in re.split(r"=== penalty ", txt)[1:]:
+    # `=== penalty <λ>` is the sweep's section header; `=== arm <name>` is the metaharness/
+    # comparison's. Same GEPA log lines underneath, so one parser serves both.
+    for section in re.split(r"=== (?:penalty|arm) ", txt)[1:]:
         lam = section.split()[0]
         iters = [int(m) for m in re.findall(r"Iteration (\d+):", section)]
         if not iters:
