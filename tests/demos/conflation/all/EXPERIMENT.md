@@ -229,6 +229,51 @@ precomputed similarities, and derived text features caps at **~95% cross-validat
 errors need world knowledge no rule set has. Haiku itself only manages 90.4% here, so ~92–95% from
 free Python is arguably the better outcome, just not the requested one.
 
+### 3.6 What Flex actually contributes: plain GEPA, no Flex
+
+Everything above optimizes a `dspy.Flex(SamePlace)`, where GEPA rewrites the module's *source*. To
+isolate what Flex adds, `run_plain_gepa.py` removes exactly that one thing: the program is a bare
+`dspy.Predict(SamePlace)`, so GEPA can only rewrite the *instruction*. Everything else is held
+identical — same splits and seed, same executor and reflection LM, `max_metric_calls=400`,
+`reflection_minibatch_size=3`, same 240-example test set.
+
+**λ is structurally inert here, and that is the finding.** A `dspy.Predict` makes exactly one
+predictor call per `forward()`, so `n_calls ≡ 1` and the metric collapses to `max(0, correct − λ)` —
+a monotone transform of accuracy for any λ<1, which shifts every candidate by a constant and cannot
+reorder them. Sweeping λ would redraw one program at five y-offsets. So plain GEPA is a **point**,
+not a frontier; it has no mechanism to trade calls for cost. The run asserts `avg_calls == 1.00`
+exactly rather than assuming it.
+
+| system | accuracy | 95% CI | calls/ex | $/1k | mean latency |
+|---|---|---|---|---|---|
+| baseline (un-optimized) | 90.4% (217/240) | [86.0, 93.5] | 1.00 | $0.98 | 1924 ms |
+| **plain GEPA** (Predict, prompt-only) | **92.5%** (222/240) | [88.5, 95.2] | 1.00 | **$2.88** | **2841 ms** |
+| **Flex + GEPA, λ=0** | **95.0%** (228/240) | [91.5, 97.1] | 0.25 | **$0.70** | **1155 ms** |
+
+**Plain GEPA is Pareto-dominated by Flex+GEPA λ=0 on all three CAL axes at once** — lower accuracy,
+4.1× the inference cost, 2.5× the latency. The accuracy difference alone is not significant
+(8 vs 2 discordant, McNemar p=0.109) on n=240; the cost and latency differences are not estimates at
+all, but direct consequences of call structure.
+
+Two further observations:
+
+- **Prompt-only optimization made inference 2.9× more expensive than doing nothing** ($2.88 vs
+  $0.98 per 1k). GEPA's only lever is the instruction, so it lengthens it — and every example pays
+  that token cost on every call, forever. It cannot trade the increase away. Flex+GEPA at λ=0 went
+  the other direction *without being asked to*: it routed 75% of cases into Python and came out
+  **cheaper than the un-optimized baseline** while also being more accurate.
+- **Plain GEPA's accuracy gain over the baseline is not statistically significant** (5 vs 10
+  discordant, p=0.302), whereas Flex+GEPA λ=0's is (4 vs 15, **p=0.019**).
+
+Two caveats on the plain-GEPA arm specifically. Its 30-example valset **saturated at 1.00 (30/30)**,
+so candidate selection ran out of signal — the same small-valset limit §3.4 hit. And with
+`skip_perfect_score` at its default, 27 iterations were skipped as "all subsample scores perfect"
+and only 4 candidates were ever proposed; at λ=0 with a 90%-accurate seed, a 3-example minibatch is
+all-correct ~73% of the time. Both push the plain-GEPA number *down*, so 92.5% is best read as a
+lower bound. Neither changes the cost or latency columns, which are structural.
+
+Search cost for this arm: **$1.56**, 552 s, 405 LM calls, instructions changed.
+
 ---
 
 ## 4. Reproducibility
@@ -238,6 +283,7 @@ python sweep_penalties.py                                   # full sweep -> pena
 python sweep_penalties.py --resume                          # skip penalties already present
 python sweep_penalties.py --penalties 0.2 --max-metric-calls 1200 --out highbudget_0p2.json
 python sweep_penalties.py --plot-only                       # re-render from JSON, no API calls
+python run_plain_gepa.py                                    # §3.6 no-Flex arm -> merges into the same JSON + figure
 ```
 
 | file | contents |
@@ -329,7 +375,8 @@ as unsupported.
 | high-budget: test eval | $0.0136 |
 | meter verification run | $0.2212 |
 | model-id probe + smoke test | $0.0086 |
-| **total** | **$11.04** |
+| §3.6 plain GEPA (no Flex): compile + test eval | $1.5600 |
+| **total** | **$12.60** |
 
 Opus reflection is ~96% of the total; Haiku execution is rounding error. Compile cost is highly
 uneven ($0.28–$3.42 at the same rollout budget) because GEPA keeps proposing while candidates keep

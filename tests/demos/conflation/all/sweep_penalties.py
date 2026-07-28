@@ -51,9 +51,13 @@ DEFAULT_MAX_METRIC_CALLS = 400
 EVAL_THREADS = 8
 
 # From references/palette.md, light mode. Validated for all-pairs CVD separation with
-# `validate_palette.js "#2a78d6,#eb6834" --mode light --pairs all` (worst ΔE 24.7 protan).
-C_OPT = "#2a78d6"      # categorical slot 1 — the GEPA-optimized programs
+# `validate_palette.js "#2a78d6,#eb6834,#1baf7a" --mode light --pairs all` — all checks pass
+# (worst pair ΔE 9.2 deutan, normal-vision 24.0). Aqua carries a contrast WARN (2.74:1 on this
+# surface), so the relief rule applies and its point is always directly labelled, never
+# identified by colour alone.
+C_OPT = "#2a78d6"      # categorical slot 1 — the GEPA-optimized Flex programs
 C_BASE = "#eb6834"     # categorical slot 2 — the un-optimized baseline
+C_PLAIN = "#1baf7a"    # categorical slot 3 — plain GEPA (dspy.Predict, instruction-only)
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
 INK_2 = "#52514e"
@@ -311,11 +315,17 @@ def plot(data: dict, path: Path | None = None) -> None:
     base_by = data.get("baseline", {}).get("by_penalty", {})
     b = base_by.get(keys[0]) if keys else None
 
+    # Plain GEPA (dspy.Predict, instruction-only) is optional — present once `run_plain_gepa.py` has
+    # run. It is a single POINT, not a curve: a Predict makes exactly one call per example whatever
+    # λ is, so the penalty cannot reorder its candidates and there is no trajectory to draw.
+    plain = data.get("plain_gepa")
+    p_test = plain["test"] if plain else None
+
     fig, axes = plt.subplots(2, 2, figsize=(12.5, 9))
     fig.patch.set_facecolor(SURFACE)
     (ax_cost, ax_lat), (ax_calls, ax_qual) = axes
 
-    def frontier(ax, xs, xlabel, title, base_x):
+    def frontier(ax, xs, xlabel, title, base_x, plain_x=None):
         # Connect in λ order, not sorted-by-x: λ is the independent variable, and sorting by cost
         # would draw a smooth monotone "frontier" the data does not actually have (λ=0.1 and λ=0.2
         # invert). The line is the trajectory as the penalty rises.
@@ -333,6 +343,13 @@ def plot(data: dict, path: Path | None = None) -> None:
             # left of the baseline point collides with it.
             ax.annotate("baseline", (base_x, b["accuracy"]), textcoords="offset points",
                         xytext=(0, -17), fontsize=8.5, color=INK_2, ha="center", zorder=4)
+        if p_test is not None and plain_x is not None:
+            ax.plot([plain_x], [p_test["accuracy"]], color=C_PLAIN, marker="D", markersize=8.5,
+                    markeredgecolor=SURFACE, markeredgewidth=2, linestyle="none", zorder=3,
+                    label="plain GEPA (no Flex, prompt-only)")
+            # Direct label, not colour alone: aqua carries a contrast WARN on this surface.
+            ax.annotate("plain GEPA", (plain_x, p_test["accuracy"]), textcoords="offset points",
+                        xytext=(0, 12), fontsize=8.5, color=INK_2, ha="center", zorder=4)
         ax.set_xlabel(xlabel)
         ax.set_ylabel("accuracy")
         ax.set_title(title, fontsize=11, loc="left", pad=10)
@@ -342,9 +359,11 @@ def plot(data: dict, path: Path | None = None) -> None:
         _style(ax)
 
     frontier(ax_cost, cost, "inference cost  (USD per 1,000 examples)",
-             "Cost → accuracy frontier", b["cost_usd_per_1k_examples"] if b else 0)
+             "Cost → accuracy frontier", b["cost_usd_per_1k_examples"] if b else 0,
+             p_test["cost_usd_per_1k_examples"] if p_test else None)
     frontier(ax_lat, lat, "mean per-request latency  (ms; 8-way concurrency)",
-             "Latency → accuracy frontier", b["latency_mean_s"] * 1000 if b else 0)
+             "Latency → accuracy frontier", b["latency_mean_s"] * 1000 if b else 0,
+             p_test["latency_mean_s"] * 1000 if p_test else None)
 
     ax_calls.plot(lam, calls, color=C_OPT, linewidth=2, marker="o", markersize=8,
                   markeredgecolor=SURFACE, markeredgewidth=2, zorder=3, label="GEPA-optimized")
@@ -354,6 +373,12 @@ def plot(data: dict, path: Path | None = None) -> None:
     for x, y in zip(lam, calls, strict=True):
         ax_calls.annotate(f"{y:.2f}", (x, y), textcoords="offset points", xytext=(0, 10),
                           ha="center", fontsize=8.5, color=INK_2, zorder=4)
+    if p_test is not None:
+        # No curve across λ: for a plain Predict the call count is structurally 1, so λ has nothing
+        # to act on. Drawn as a flat line spanning the axis, which is literally what it is — and it
+        # lands on top of the baseline's line, which is the point worth seeing.
+        ax_calls.axhline(p_test["avg_calls"], color=C_PLAIN, linewidth=2, linestyle=(0, (1, 2)),
+                         zorder=3, label="plain GEPA (no Flex) — fixed at 1.00, λ cannot move it")
     ax_calls.set_xlabel("LLM-call penalty  λ")
     ax_calls.set_ylabel("avg LLM calls per example")
     ax_calls.set_title("What the penalty buys: decomposition into Python", fontsize=11, loc="left", pad=10)
@@ -383,10 +408,16 @@ def plot(data: dict, path: Path | None = None) -> None:
                              textcoords="offset points", xytext=(0, 6), ha="center",
                              fontsize=8, color=(C_OPT if pv < 0.05 else INK_2), zorder=4,
                              fontweight=("bold" if pv < 0.05 else "normal"))
+    if plain is not None:
+        pv_plain = mcnemar_p(data["baseline"]["records"], plain["records"])
+        ax_qual.axhline(plain["test"]["accuracy"], color=C_PLAIN, linewidth=2, linestyle=(0, (1, 2)),
+                        zorder=3,
+                        label=f"plain GEPA (no Flex), p={pv_plain:.3f} vs baseline")
     ax_qual.set_xlabel("LLM-call penalty  λ")
     ax_qual.set_ylabel("accuracy")
-    lo = min([*[c[0] for c in ci], b["accuracy"] if b else 1.0]) if b else min(c[0] for c in ci)
-    hi = max([*[c[1] for c in ci], b["accuracy"] if b else 0.0]) if b else max(c[1] for c in ci)
+    plain_acc = [p_test["accuracy"]] if p_test else []
+    lo = min([*[c[0] for c in ci], *plain_acc, b["accuracy"] if b else 1.0]) if b else min(c[0] for c in ci)
+    hi = max([*[c[1] for c in ci], *plain_acc, b["accuracy"] if b else 0.0]) if b else max(c[1] for c in ci)
     pad = max(0.012, (hi - lo) * 0.16)
     # Extra headroom below clears a strip for the legend under the lowest interval.
     ax_qual.set_ylim(lo - pad * 2.6, hi + pad * 1.7)  # truncated axis: y starts well above 0
@@ -404,9 +435,15 @@ def plot(data: dict, path: Path | None = None) -> None:
         f"(exec {meta.get('exec_model', '?').split('/')[-1]}, "
         f"reflection {meta.get('reflection_model', '?').split('/')[-1]}, "
         f"n_test={meta.get('n_test', '?')})",
-        fontsize=13, color=INK, x=0.01, ha="left", y=0.985,
+        fontsize=13, color=INK, x=0.01, ha="left", y=0.992,
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    if p_test is not None:
+        fig.text(0.01, 0.951,
+                 "overlaid: plain GEPA on a bare dspy.Predict — instruction-only, no Flex. One "
+                 "point, not a curve: a Predict always makes exactly 1 call, so λ has nothing to "
+                 "act on.",
+                 fontsize=9.5, color=INK_2, ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.932 if p_test is not None else 0.96))
     out_png = path or PLOT_PATH
     fig.savefig(out_png, dpi=150, facecolor=SURFACE)
     plt.close(fig)

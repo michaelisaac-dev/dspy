@@ -1,0 +1,42 @@
+{
+  "traces": [],
+  "train": [],
+  "demos": [],
+  "signature": {
+    "instructions": "TASK\n====\nYou are given two business listings and must decide whether they refer to the SAME physical\nplace (same business at the same location). Output a single boolean field:\n\n    is_same: True | False\n\nINPUT FIELDS\n------------\n- input_name    : name of place A (may contain store/franchise numbers, e.g. \"SUBWAY #30696\")\n- input_address : street address of place A (usually uppercase, may contain unit/suite tokens)\n- match_name    : name of place B (candidate match, often a cleaner/shorter form)\n- match_address : street address of place B\n- distance      : geographic distance between the two records, in METERS\n                  (values seen: ~2–5 m for the same storefront, ~200+ m for clearly\n                   different buildings)\n\nSTRATEGY\n========\nImplement a DETERMINISTIC Python algorithm first. LLM calls are free under the current\nobjective, so accuracy is the ONLY thing that matters: use an LLM call as a fallback for\nthe genuinely ambiguous cases the rules cannot resolve confidently, but never let the LLM\noverride a rule that is clearly satisfied.\n\nSTEP 1 — Normalize names\n------------------------\n- Uppercase, strip punctuation, collapse whitespace.\n- REMOVE franchise / store-number tokens: \"#30696\", \"# 12\", \"STORE 123\", \"NO. 45\",\n  trailing bare digit runs, and location qualifiers like \"(AIRPORT)\", \"- DOWNTOWN\".\n- Remove noise words: THE, A, AND, &, INC, LLC, LP, CO, CORP, CO., LTD, RESTAURANT\n  (only when it is a trailing generic), CAFE/COFFEE only if it does not carry the identity.\n- Compare the cleaned names with a fuzzy score (e.g. token-set ratio + difflib) and also\n  check prefix containment: if one cleaned name is a prefix of, or fully contained in,\n  the other (\"SUBWAY\" ⊂ \"SUBWAY 30696\"), treat that as a NAME MATCH.\n\nSTEP 2 — Normalize addresses\n----------------------------\n- Uppercase, strip punctuation.\n- Extract the leading house/building number (e.g. \"3550\", \"4001\", \"3143\").\n- Extract the street name core (\"STANLEY\", \"PIEDMONT\", \"WALNUT\").\n- STRIP and IGNORE street-type suffixes entirely when comparing: AVE/AVENUE, ST/STREET,\n  DR/DRIVE, BLVD/BOULEVARD, RD/ROAD, LN/LANE, WAY, CT/COURT, PL/PLACE, PKWY/PARKWAY,\n  HWY/HIGHWAY, CIR, TER, SQ. A suffix mismatch (e.g. \"STANLEY DR\" vs \"STANLEY BLVD\") is\n  a common data-entry variation and must NOT prevent a match.\n- STRIP and IGNORE directional prefixes/suffixes (N, S, E, W, NE, NW, SE, SW) differences\n  as weak evidence only.\n- STRIP and IGNORE unit/secondary designators: \"#2\", \"STE 5\", \"SUITE 5\", \"APT 3\",\n  \"UNIT B\", \"BLDG 4\", \"FL 2\", and trailing single letters/numbers such as\n  \"4001 PIEDMONT AVE A\" vs \"4001 PIEDMONT AVE\". Unit differences do NOT make places\n  different.\n\nSTEP 3 — Decision rules (apply in order)\n----------------------------------------\n1. If (name matches per Step 1) AND (house numbers equal) AND (street cores equal or\n    fuzzy-equal) → is_same = True, regardless of street-suffix or unit differences,\n    provided distance is small (< ~150 m). This is the rule that resolves cases like\n    \"SUBWAY #30696 / 3550 STANLEY DR #2\" vs \"SUBWAY / 3550 STANLEY BLVD\" (distance 2.9 m)\n    → True.\n2. If names are essentially identical and distance is very small (< ~30 m) → True,\n    even if addresses differ only in unit letters/numbers.\n3. If names are clearly different businesses (low fuzzy score, no containment, different\n    brands) AND house numbers differ AND distance is large (> ~100 m) → False.\n    e.g. \"CAKES AND BAKES / 3143 WALNUT AVE\" vs \"CASAS BY SANDRA / 3340 WALNUT AVE\"\n    (237 m) → False.\n4. If distance is very large (> ~500 m) → False unless the names AND full addresses are\n    identical (bad geocoding), in which case prefer the address evidence.\n5. Otherwise (mixed signals: same name but different house numbers, different names at the\n    same address, tiny distance with unrelated names, abbreviations/DBA forms, chains with\n    two nearby branches) → call the LLM with all four fields, asking it to reason about\n    whether these are the same storefront, and use its verdict.\n\nGUIDING PRINCIPLES\n------------------\n- Be tolerant of name decorations: store numbers, legal suffixes, and truncations are the\n  same business.\n- Be tolerant of address formatting: street-type suffix swaps, unit/suite tokens,\n  abbreviations, and trailing unit letters are the same location.\n- House-number mismatch plus name mismatch plus >100 m distance is the strongest signal\n  of DIFFERENT places.\n- Very small distances (a few meters) strongly indicate the same building; weight them\n  heavily.\n- Output only the boolean is_same.",
+    "fields": [
+      {
+        "prefix": "Input Name:",
+        "description": "Name of place A."
+      },
+      {
+        "prefix": "Input Address:",
+        "description": "Street address of place A."
+      },
+      {
+        "prefix": "Match Name:",
+        "description": "Name of place B."
+      },
+      {
+        "prefix": "Match Address:",
+        "description": "Street address of place B."
+      },
+      {
+        "prefix": "Distance:",
+        "description": "Distance between the two coordinates."
+      },
+      {
+        "prefix": "Is Same:",
+        "description": "True if A and B are the same physical place, else False."
+      }
+    ]
+  },
+  "lm": null,
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.0b1",
+      "cloudpickle": "3.1"
+    }
+  }
+}
