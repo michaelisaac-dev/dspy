@@ -7,17 +7,17 @@
 
 # Let the Model Write the Code
 
-*This is a guest post by Michael Isaac, a PhD student in programming languages at CMU, written during an internship at cmpnd <!-- TODO: link cmpnd, Michael's site -->. Michael works on DSPy's optimizers — including the new module this post introduces.*
+*This is a guest post by Michael Isaac, a PhD student in software engineering at CMU, written during his internship at cmpnd <!-- TODO: link cmpnd, Michael's site -->. Michael works on DSPy's modules and optimizers, including the new module *Flex* this post introduces.*
 
-Drew has spent two years on this blog making one argument from several angles: stop hand-tuning prompts. Declare the task, define a metric, and let an optimizer write the prompt — because [the model writes a better one than you will](https://www.dbreunig.com/2025/06/10/let-the-model-write-the-prompt.html), and because hand-tuned prompts [pile up debt](https://www.dbreunig.com/2026/06/22/the-problem-is-prompt-debt.html) that eventually freezes your system to an aging model.
+Drew has spent two years on this blog making one argument from several angles: stop hand-tuning prompts. Declare the task, define a metric, and let an optimizer write the prompt. That's because [the model writes a better one than you will](https://www.dbreunig.com/2025/06/10/let-the-model-write-the-prompt.html), and because hand-tuned prompts [pile up debt](https://www.dbreunig.com/2026/06/22/the-problem-is-prompt-debt.html) eventually freeze your system to an aging model.
 
 I want to push that argument one step further: stop hand-writing the *program*.
 
-The newest frontier models aren't just better classifiers and better writers. They are genuinely good software engineers. Taking advantage of them doesn't only mean swapping in a smaller, more capable model behind your existing pipeline — it means letting a frontier model's coding ability restructure the pipeline itself. That's what `dspy.Flex` does, and the results surprised even us.
+The newest frontier models aren't just better classifiers and better writers. They are good software engineers, too. Taking advantage of them doesn't only mean swapping in a smaller, more capable model behind your existing pipeline. It means letting a frontier model's coding ability restructure the pipeline itself. That's what `dspy.Flex` does.
 
 ## The task is not the implementation
 
-The core promise of DSPy has always been separation of concerns. You write a Signature — the *what*:
+The promise of DSPy has always been separation of concerns. You write a Signature, the *what*:
 
 ```python
 class SamePlace(dspy.Signature):
@@ -27,11 +27,10 @@ class SamePlace(dspy.Signature):
     input_address: str = dspy.InputField(desc="Street address of place A.")
     match_name: str = dspy.InputField(desc="Name of place B.")
     match_address: str = dspy.InputField(desc="Street address of place B.")
-    distance: float = dspy.InputField(desc="Distance between the two coordinates.")
     is_same: bool = dspy.OutputField(desc="True if A and B are the same physical place.")
 ```
 
-The *how* — the prompt format, the few-shot examples, the model-specific quirks — is the framework's problem. Which means that when the *how* improves, every program declared this way improves with it. Innovation arrives, and your Signatures just work.
+The *how* -- the prompt format, the few-shot examples, the model-specific quirks -- is the framework's problem. Which means that when the *how* improves, every program declared this way improves with it. Innovation arrives, and your Signatures just work.
 
 Look at the history of what DSPy has treated as an optimizable artifact and there's a clear progression:
 
