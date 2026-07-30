@@ -9,43 +9,20 @@ from gepa import EvaluationBatch
 import dspy
 from dspy.primitives import Prediction
 from dspy.teleprompt.bootstrap_trace import FailedPrediction
+from dspy.utils.exceptions import LMError
 
 logger = logging.getLogger(__name__)
 
-_CODE_KEY_SUFFIX = "::code"
-
-
-def is_code_key(key: str) -> bool:
-    return key.endswith(_CODE_KEY_SUFFIX)
-
-
-def make_code_key(path: str) -> str:
-    return f"{path}{_CODE_KEY_SUFFIX}"
-
-
-def code_key_path(key: str) -> str:
-    return key[: -len(_CODE_KEY_SUFFIX)]
-
-
 def enumerate_flex_submodules(root) -> dict[str, Any]:
-    """Map submodule path -> module for every code-optimizable (``dspy.Flex``) submodule."""
+    """Map parameter path -> module for every code-optimizable (``dspy.Flex``) submodule."""
     from dspy.flex import Flex
 
-    return {name: sub for name, sub in root.named_sub_modules() if isinstance(sub, Flex)}
-
-
-def flex_internal_predictor_ids(flex_submodules: dict[str, Any]) -> set[int]:
-    """Object ids of predictors owned by ``dspy.Flex`` submodules."""
-    ids: set[int] = set()
-    for flex in flex_submodules.values():
-        for _, pred in flex.named_predictors():
-            ids.add(id(pred))
-    return ids
+    return {name: sub for name, sub in root.named_parameters() if isinstance(sub, Flex)}
 
 
 def flex_task_context(student_module) -> tuple[dict[str, str], dict[str, str]]:
     """Per flex submodule path, the ``(task_description, available_context)`` shown to the code
-    proposer, keyed by the path used in the submodule's code candidate key.
+    proposer, keyed by the submodule's parameter path (its candidate key).
     """
     task_descriptions: dict[str, str] = {}
     context_blurbs: dict[str, str] = {}
@@ -53,8 +30,7 @@ def flex_task_context(student_module) -> tuple[dict[str, str], dict[str, str]]:
         ctx = getattr(sub, "_flex_ctx", None)
         if ctx is not None and hasattr(ctx, "render_signature_spec"):
             task_descriptions[path] = ctx.render_signature_spec()
-            sandboxed = getattr(sub, "_bridge", None) is not None
-            context_blurbs[path] = ctx.render_context_blurb(sandboxed=sandboxed)
+            context_blurbs[path] = ctx.render_context_blurb(sandboxed=True)
     return task_descriptions, context_blurbs
 
 
@@ -84,7 +60,7 @@ def _format_failures(records: list[dict[str, Any]]) -> str:
 
 
 class CodeProposalSignature(dspy.Signature):
-    """Revise the full source code of a flex-marked dspy.Flex submodule.
+    """Revise the full source code of a dspy.Flex submodule.
 
     You receive the submodule's task description (its Signature), the available context (any tools
     and style notes), the catalog of allowed primitives, the module's current source, and a batch
@@ -163,16 +139,17 @@ def propose_code(
     proposer = dspy.Predict(CodeProposalSignature)
     with dspy.context(lm=reflection_lm):
         for ckey in code_keys:
-            path = code_key_path(ckey)
             try:
                 out = proposer(
-                    task_description=task_descriptions.get(path, path),
-                    available_context=context_blurbs.get(path, "(no extra context)"),
+                    task_description=task_descriptions.get(ckey, ckey),
+                    available_context=context_blurbs.get(ckey, "(no extra context)"),
                     primitives_catalog=PRIMITIVES_CATALOG,
                     current_source=candidate[ckey],
                     failures=_format_failures(reflective_dataset.get(ckey, [])),
                 )
                 results[ckey] = _strip_code_fences(out.revised_source)
+            except LMError:
+                raise
             except Exception as e:
                 logger.warning("Code proposer failed on %s (%s); keeping original.", ckey, e)
                 results[ckey] = candidate[ckey]
@@ -180,15 +157,15 @@ def propose_code(
 
 
 def rebind_flex_code(program, candidate: dict[str, str]) -> None:
-    """Rebind ``module_src`` on each ``dspy.Flex`` submodule whose code key is in the candidate.
+    """Rebind ``module_src`` on each ``dspy.Flex`` submodule whose path is in the candidate.
 
-    Raises if a candidate's source is broken; ``DspyAdapter.evaluate`` catches that and scores the
-    batch as a failure.
+    A candidate that does not parse raises here (``DspyAdapter.evaluate`` catches that and scores
+    the batch as a failure); one that parses but breaks at runtime fails per example during
+    evaluation, since the code first runs at ``forward``.
     """
     for path, flex in enumerate_flex_submodules(program).items():
-        key = make_code_key(path)
-        if key in candidate:
-            flex._bind_code(candidate[key])
+        if path in candidate:
+            flex._bind_code(candidate[path])
 
 
 def code_reflective_records(eval_batch) -> list[dict[str, Any]]:
@@ -253,6 +230,7 @@ def evaluate_with_trace(
         num_threads=num_threads,
         raise_on_error=False,
         capture_failed_parses=True,
+        capture_crashes=True,
         failure_score=failure_score,
         format_failure_score=failure_score,
         callback_metadata=callback_metadata,

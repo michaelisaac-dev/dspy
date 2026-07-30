@@ -14,7 +14,7 @@ An ordinary module's tunable surface is its predictors' instructions. A `Flex`'s
 
 You construct `Flex` from the same signature you'd give `Predict`, and it's immediately runnable. With no tools, its baseline source is a single `dspy.Predict` over the whole signature; with tools, a single `dspy.RLM` so the baseline can call them. The baseline is deliberately the simplest thing that works — one call, no decomposition — because it's meant to be the starting point of a search, not the answer. This is what lets you adopt `Flex` by changing one line and revert just as cheaply.
 
-### 3. GEPA discovers the marker and optimizes code instead of text
+### 3. GEPA discovers `Flex` by type and optimizes code instead of text
 
 When GEPA compiles a program, it enumerates the `Flex` submodules — by type, so only genuine `Flex` instances qualify — and splits its work: each `Flex` becomes a **code component**, every other predictor stays an **instruction component**. Code components are seeded with their current `module_src` and evolved by a dedicated code proposer; instruction components are seeded with their current instructions and optimized using GEPA. A custom `instruction_proposer` replaces the instruction proposer only; code components stay on the code proposer, since a proposer written to rewrite prompts would return prose where a `dspy.Module` subclass is required.
 
@@ -24,7 +24,9 @@ Instruction optimization in GEPA is per-predictor: it looks at one predictor's i
 
 ### 5. Predictors inside a Flex are owned by its code, not tuned in parallel
 
-When you mix a `Flex` with ordinary modules in one program, GEPA optimizes the `Flex`'s code and the other predictors' instructions — but never the instructions of predictors that live *inside* the `Flex`. Those predictors are constructed by the current `module_src` and will be replaced wholesale by the next code candidate, so tuning their instructions would be optimizing something about to be overwritten. `Flex` excludes them from the instruction-component set by object identity, keeping the two optimization surfaces from fighting each other.
+When you mix a `Flex` with ordinary modules in one program, GEPA optimizes the `Flex`'s code and the other predictors' instructions — but never the instructions of predictors that live *inside* the `Flex`. Those predictors are constructed by the current `module_src` and will be replaced wholesale by the next code candidate, so tuning their instructions would be optimizing something about to be overwritten.
+
+The mechanism is structural: `Flex` is a `Parameter` (like `dspy.Predict`), so a parent program's `named_parameters()` yields it as one state-bearing leaf and never recurses into it. That single fact drives saving (the parent's state nests the `Flex`'s state, `module_src` included), GEPA discovery (each `Flex` is one code component), and opacity — a parent's `named_predictors()`, `predictors()`, `set_lm()`, and demo/instruction optimizers like `BootstrapFewShot` don't see the `Flex`'s internals, so nothing tunes them behind the code's back. The `Flex` reports the same about itself: `flex.named_predictors()` is empty — its update unit is its code, not the predictors the code constructs. A `Flex` holds no LM of its own: like any module, its bridged predictor calls resolve the ambient LM at call time (`dspy.configure(lm=...)`, or a caller's `dspy.context(lm=...)`). `reset_copy()` resets a `Flex` the way it resets a `Predict`: internal predictor state is cleared while `module_src` is kept, just as tuned instructions are.
 
 ### 6. A broken candidate scores as a failure, not a crash
 
@@ -36,7 +38,7 @@ A code candidate can bind cleanly and still raise mid-`forward` on some inputs �
 
 ### 8. Generated code always runs in an interpreter, never in-process
 
-`Flex` runs `module_src` in a sandbox: the `interpreter_factory` defaults to `dspy.PythonInterpreter` (Deno/Pyodide), matching `dspy.RLM`, and — like `dspy.RLM` — must be a *zero-argument factory* (a bare instance or `None` is rejected). Since the code is authored by the reflection model, isolating it keeps it from running with the host's full permissions: the optimizer-authored glue runs isolated, and only predictor construction and predictor calls bridge back to the host to make real LM calls. Sandbox sessions are stateful and not thread-safe, so the factory is called per rollout and each parallel evaluation gets its own; pass your own factory to customize the sandbox (grant filesystem/network access, or use another backend). `max_predictor_calls` caps bridged LM calls per `forward` as a runaway guard.
+`Flex` runs `module_src` in a sandbox: the `interpreter_factory` defaults to `dspy.PythonInterpreter` (Deno/Pyodide), matching `dspy.RLM`, and — like `dspy.RLM` — must be a *zero-argument factory* (a bare instance or `None` is rejected). Since the code is authored by the reflection model, isolating it keeps it from running with the host's full permissions: the optimizer-authored glue runs isolated, and only provided-tool calls, predictor construction, and predictor calls bridge back to the host to make real LM calls. The factory is called per `forward` — each call gets a fresh interpreter, shut down on return — so parallel evaluations are isolated by construction; pass your own factory to customize the sandbox (grant filesystem/network access, or use another backend). `max_predictor_calls` caps bridged LM calls per `forward` as a runaway guard.
 
 ### 9. The declared output types are enforced at the sandbox boundary
 
@@ -44,7 +46,7 @@ Everything the generated code returns crosses back as JSON, so a field declared 
 
 ### 10. The code is state; the interpreter is a runtime dependency
 
-`module_src` is part of the module's serialized state, so saving an optimized program and loading it elsewhere restores the discovered code and its predictors. The interpreter is treated like the LM: a live runtime resource that isn't serialized. Reconstructing with `dspy.Flex(signature)` restores the default sandbox, so you only re-supply the `interpreter_factory` before `load` if you optimized with a customized one. This mirrors how DSPy handles LMs — configuration travels with the program, live resources are wired up at load time.
+`module_src` is the *whole* serialized state — a saved `Flex` is `{"module_src": ...}`, nothing else. The internal predictors are not saved: they are derived from the code, and loading rebinds the source, which reconstructs them. The interpreter is treated like the LM: a live runtime resource that isn't serialized. The same holds for whole-program saving: `save(path, save_program=True)` cloudpickles the program with the bridge's live sessions excluded, and loading rebuilds a session-less bridge that re-initializes on first use. Reconstructing with `dspy.Flex(signature)` restores the default sandbox, so you only re-supply the `interpreter_factory` before `load` if you optimized with a customized one. This mirrors how DSPy handles LMs — configuration travels with the program, live resources are wired up at load time.
 
 ### 11. Flex is experimental and the interface is in flux
 
@@ -62,9 +64,6 @@ Runs the currently bound source inside the interpreter, bridging predictor calls
 
 **`module_src`**
 A read-only property holding the current implementation as source — one `dspy.Module` subclass. This is the value GEPA reads as the seed and overwrites with each accepted candidate. Print it to see what the optimizer discovered.
-
-**`close()` / context-manager use**
-Shuts down any interpreter sessions the `Flex` created. Safe to call repeatedly. Since `Flex` always runs sandboxed, use `with dspy.Flex(...) as f:` or call `close()` explicitly to release the Deno subprocess.
 
 ### Optimizing with GEPA
 

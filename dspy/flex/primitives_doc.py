@@ -44,7 +44,7 @@ Available DSPy primitives:
   Give any predictor task-specific INSTRUCTIONS by constructing it over a
   `dspy.Signature("a, b -> c, d", "natural-language instructions ...")` instead of a bare
   string.
-  You may optimize optimize these string instructions. See "Writing and refining instructions" 
+  You may optimize these string instructions. See "Writing and refining instructions"
   below.
 
 - `dspy.ChainOfThought("a -> b")`, like Predict but adds an implicit `reasoning`
@@ -87,13 +87,16 @@ retrievers, `dspy.Flex` itself, and class-based signatures with
 `dspy.InputField` / `dspy.OutputField` (use the string form,
 `dspy.Signature("a -> b", "instructions")`). The host owns prompting, parsing,
 and the LM; this source only declares predictors and the Python wiring them
-together. The code also runs sandboxed, with no host filesystem or network, unless otherwise 
+together. The code also runs sandboxed, with no host filesystem or network, unless otherwise
 provided via a host tool.
 
 Rules you MUST follow:
 
 - Define every predictor in `__init__` as `self.<name> = dspy.Predict(...)` and call
   it in `forward` as `self.<name>(...)`.
+- `forward` runs on a fresh instance every call: do not rely on `self` attributes
+  carrying state across calls (caches, counters). Cross-call state, if truly needed,
+  belongs in a provided host tool.
 
 - Give predictors INSTRUCTIONS, don't just rely on field names. When the feedback shows
   the model needs guidance, construct the predictor over

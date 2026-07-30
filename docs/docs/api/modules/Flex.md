@@ -1,6 +1,6 @@
 # dspy.Flex
 
-`Flex` is a DSPy module whose implementation is *optimizable code* rather than a fixed prompt. You construct it from a signature, and it defaults to a thin baseline over that signature. What makes it different is what an optimizer is allowed to do with it: instead of only rewriting instructions, `dspy.GEPA` can rewrite the module's entire source — splitting the task into multiple predictors, folding deterministic steps into plain Python, and authoring its own helper tools. `Flex` acts as a marker to indicate that code is an optimizable parameter.
+`Flex` is a DSPy module whose implementation is *optimizable code* rather than a fixed prompt. You construct it from a signature, and it defaults to a thin baseline over that signature. What makes it different is what an optimizer is allowed to do with it: instead of only rewriting instructions, `dspy.GEPA` can rewrite the module's entire source — splitting the task into multiple predictors, folding deterministic steps into plain Python, and authoring its own helper tools. Being a `Flex` — recognized by type — is what tells GEPA the module's code is an optimizable parameter.
 
 Reach for `Flex` when you don't yet know the right *shape* of a solution — how many LM calls it needs, where code should replace a call, how the work should decompose — and you'd rather have the optimizer discover that structure than hand-write it.
 
@@ -90,9 +90,9 @@ The `program_trace` parameter is opt-in *by declaration*: only metrics that name
 
 ## Sandboxed Execution
 
-`Flex` always runs its generated code in a sandbox — like `dspy.RLM`, it never runs it in the host Python process. `interpreter_factory` defaults to `dspy.PythonInterpreter` (Deno/Pyodide) and must be a **zero-argument factory** returning a fresh `CodeInterpreter`; a bare instance is not accepted, so each parallel evaluation during optimization gets its own session. The code is authored by the reflection model, so isolating it keeps it from running with your host's full permissions. The optimizer-authored glue — control flow, string work, arithmetic, imports — runs inside the sandbox, and only predictor construction and predictor calls bridge back to the host, which makes the real LM calls.
+`Flex` always runs its generated code in a sandbox — like `dspy.RLM`, it never runs it in the host Python process. `interpreter_factory` defaults to `dspy.PythonInterpreter` (Deno/Pyodide) and must be a **zero-argument factory** returning a fresh `CodeInterpreter`; a bare instance is not accepted, so each parallel evaluation during optimization gets its own session. The code is authored by the reflection model, so isolating it keeps it from running with your host's full permissions. The optimizer-authored glue — control flow, string work, arithmetic, imports — runs inside the sandbox, and only provided-tool calls, predictor construction, and predictor calls bridge back to the host, which makes the real LM calls.
 
-Because the default builds a `PythonInterpreter`, constructing a `Flex` needs [Deno](https://deno.land/) installed and raises with install instructions otherwise. To customize the sandbox — grant filesystem or network access, or use another `CodeInterpreter` backend — pass your own factory:
+Because the default builds a `PythonInterpreter`, *running* a `Flex` needs [Deno](https://deno.land/) installed and raises with install instructions otherwise — construction, save, and load are interpreter-free; each call spins up a fresh sandbox and tears it down on return. To customize the sandbox — grant filesystem or network access, or use another `CodeInterpreter` backend — pass your own factory:
 
 ```python
 solve = dspy.Flex(
@@ -101,12 +101,7 @@ solve = dspy.Flex(
 )
 ```
 
-Because the interpreter holds live sessions, use the `Flex` as a context manager or call `close()` when you're done:
-
-```python
-with dspy.Flex("invoice: str -> total_cents: int") as solve:
-    result = solve(invoice=text)
-```
+There is nothing to clean up: each call creates its own interpreter and shuts it down on return, so a `Flex` holds no live sessions between calls.
 
 ## Tools
 
@@ -164,7 +159,6 @@ The interpreter, like the LM, is a **runtime dependency and is not serialized**.
             - forward
             - module_src
             - signature
-            - close
             - deepcopy
             - dump_state
             - get_lm
@@ -176,6 +170,7 @@ The interpreter, like the LM, is a **runtime dependency and is not serialized**.
             - named_sub_modules
             - parameters
             - predictors
+            - reset
             - reset_copy
             - save
             - set_lm

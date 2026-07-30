@@ -1,4 +1,4 @@
-"""Tests for flex-marked (dspy.Flex) code optimization inside dspy.GEPA.
+"""Tests for dspy.Flex code optimization inside dspy.GEPA.
 
 Covers the behavior:
 - a freshly constructed dspy.Flex binds a deterministic, LM-free baseline (a dspy.Module subclass;
@@ -18,13 +18,11 @@ import textwrap
 import pytest
 
 import dspy
-from dspy.teleprompt.gepa.gepa_flex_utils import (
-    enumerate_flex_submodules,
-    flex_internal_predictor_ids,
-    make_code_key,
-)
+from dspy.teleprompt.bootstrap_trace import FailedPrediction
+from dspy.teleprompt.gepa.gepa_flex_utils import enumerate_flex_submodules
 from dspy.teleprompt.gepa.gepa_utils import DspyAdapter
 from dspy.utils.dummies import DummyLM
+from dspy.utils.exceptions import LMRateLimitError
 
 # A plain dspy.Predict module class that binds without an LM (no RLM interpreter needed).
 SIMPLE_MODULE = textwrap.dedent(
@@ -85,7 +83,7 @@ def test_only_flex_instances_are_code_optimizable() -> None:
         def forward(self, **kwargs):
             return self.real(**kwargs)
 
-    assert set(enumerate_flex_submodules(Prog())) == {"self.real"}
+    assert set(enumerate_flex_submodules(Prog())) == {"real"}
 
 
 def test_enumerate_finds_top_level_and_nested_flex() -> None:
@@ -103,7 +101,7 @@ def test_enumerate_finds_top_level_and_nested_flex() -> None:
 
     prog = Prog()
     flex_paths = enumerate_flex_submodules(prog)
-    assert set(flex_paths) == {"self.flex"}  # the regular Predict is not code-optimizable
+    assert set(flex_paths) == {"flex"}  # the regular Predict is not code-optimizable
 
 
 # --- exclusion of Flex-internal predictors -----------------------------------
@@ -120,16 +118,12 @@ def test_flex_internal_predictors_excluded_from_instruction_components() -> None
             return self.flex(**kwargs)
 
     prog = Prog()
-    flex_subs = enumerate_flex_submodules(prog)
-    internal_ids = flex_internal_predictor_ids(flex_subs)
-
-    instruction_names = [n for n, p in prog.named_predictors() if id(p) not in internal_ids]
-    # Only the sibling Predict gets instruction optimization; the Flex's internal
-    # predictors are owned by its code and excluded.
-    assert instruction_names == ["sibling"]
-    all_names = [n for n, _ in prog.named_predictors()]
-    assert any(n.startswith("flex.") for n in all_names)  # internals exist...
-    assert not any(n.startswith("flex.") for n in instruction_names)  # ...but are excluded
+    # Only the sibling Predict gets instruction optimization; the Flex's internal predictors are
+    # owned by its code and never reported as tunable units — from the parent (Parameter leaf) or
+    # from the Flex itself (named_predictors() is empty) — so no exclusion logic is needed.
+    assert [n for n, _ in prog.named_predictors()] == ["sibling"]
+    assert prog.flex.named_predictors() == []
+    assert set(enumerate_flex_submodules(prog)) == {"flex"}
 
 
 # --- adapter: build_program rebinds code, applies instructions ---------------
@@ -139,13 +133,13 @@ def test_build_program_rebinds_flex_code() -> None:
     student = dspy.Flex(Echo)
     adapter = DspyAdapter(student_module=student, metric_fn=_metric, feedback_map={})
 
-    candidate = {make_code_key("self"): SIMPLE_MODULE}
+    candidate = {"self": SIMPLE_MODULE}
     rebuilt = adapter.build_program(candidate)
 
     assert 'dspy.Predict("q -> a")' in rebuilt.module_src
     assert "self.p" in rebuilt.module_src
     assert "dspy.RLM(" not in rebuilt.module_src  # baseline replaced
-    assert hasattr(rebuilt, "p")  # the new predictor is attached flat on the module
+    assert not hasattr(rebuilt, "p")  # predictors are per-forward artifacts, never set on the Flex
 
 
 # --- adapter: selection eval passes the trace to a flex metric ---------------
@@ -164,7 +158,7 @@ def test_selection_eval_passes_program_trace_to_declaring_metric() -> None:
 
     student = dspy.Flex(Echo)  # a flex submodule is present
     adapter = DspyAdapter(student_module=student, metric_fn=trace_aware_metric, feedback_map={})
-    candidate = {make_code_key("self"): SIMPLE_MODULE}  # one dspy.Predict -> one traced call
+    candidate = {"self": SIMPLE_MODULE}  # one dspy.Predict -> one traced call
     ex = dspy.Example(q="hi", a="hi").with_inputs("q")
 
     dspy.configure(lm=DummyLM([{"a": "hi"}]))
@@ -185,7 +179,7 @@ def test_selection_eval_keeps_vanilla_semantics_for_legacy_metric() -> None:
 
     student = dspy.Flex(Echo)
     adapter = DspyAdapter(student_module=student, metric_fn=legacy_metric, feedback_map={})
-    candidate = {make_code_key("self"): SIMPLE_MODULE}
+    candidate = {"self": SIMPLE_MODULE}
     ex = dspy.Example(q="hi", a="hi").with_inputs("q")
 
     dspy.configure(lm=DummyLM([{"a": "hi"}]))
@@ -210,7 +204,7 @@ def test_selection_eval_binds_metric_with_required_contract_params() -> None:
 
     student = dspy.Flex(Echo)
     adapter = DspyAdapter(student_module=student, metric_fn=strict_metric, feedback_map={})
-    candidate = {make_code_key("self"): SIMPLE_MODULE}
+    candidate = {"self": SIMPLE_MODULE}
     ex = dspy.Example(q="hi", a="hi").with_inputs("q")
 
     dspy.configure(lm=DummyLM([{"a": "hi"}]))
@@ -238,17 +232,17 @@ CRASHY_MODULE = textwrap.dedent(
 
 
 def test_evaluate_scores_stay_aligned_when_an_example_crashes() -> None:
-    """A code candidate that binds fine but raises at runtime on one input gets dropped from
-    bootstrap_trace_data's results. Scores must still come back one-per-example, aligned by
-    position — the gepa engine pairs scores with example ids positionally, so a short list would
-    credit example N+1's score to example N (and crash its state bookkeeping)."""
+    """A code candidate that binds fine but raises at runtime on one input must still score
+    one-per-example, aligned by position — the gepa engine pairs scores with example ids
+    positionally, so a short list would credit example N+1's score to example N (and crash its
+    state bookkeeping). The crashed slot carries a FailedPrediction with the error."""
 
     def exact_match(gold, pred, trace=None, pred_name=None, pred_trace=None):
         return 1.0 if getattr(pred, "a", None) == gold.a else 0.0
 
     student = dspy.Flex(Echo)
     adapter = DspyAdapter(student_module=student, metric_fn=exact_match, feedback_map={})
-    candidate = {make_code_key("self"): CRASHY_MODULE}
+    candidate = {"self": CRASHY_MODULE}
     batch = [
         dspy.Example(q="hi", a="hi").with_inputs("q"),
         dspy.Example(q="boom", a="boom").with_inputs("q"),  # raises inside forward
@@ -258,8 +252,43 @@ def test_evaluate_scores_stay_aligned_when_an_example_crashes() -> None:
     result = adapter.evaluate(batch, candidate, capture_traces=False)
 
     assert result.scores == [1.0, 0.0, 1.0]  # crashed example scores as a failure, in place
-    assert result.outputs[1] is None  # no prediction for the crashed example
+    assert isinstance(result.outputs[1], FailedPrediction)  # the crash is captured, not dropped
+    assert "runtime crash on this input" in result.outputs[1].completion_text
     assert getattr(result.outputs[2], "a", None) == "yo"  # later examples keep their own results
+
+
+def test_crashed_examples_still_reach_code_reflective_records() -> None:
+    """An example whose forward raised must reach the code proposer's reflective records with
+    the failing input and the error — for a code candidate the crash IS the feedback. If it
+    were dropped (bootstrap_trace_data's default), GEPA would score the slot as a failure yet
+    reflection would never learn which input broke or how, and would keep proposing code with
+    the same bug."""
+
+    class Prog(dspy.Module):
+        def __init__(self):
+            super().__init__()
+            self.flex = dspy.Flex(Echo)  # a flex submodule routes evaluation through the trace path
+
+        def forward(self, **kwargs):
+            if kwargs["q"] == "boom":
+                raise RuntimeError("runtime crash on this input")
+            return dspy.Prediction(a=kwargs["q"])
+
+    adapter = DspyAdapter(student_module=Prog(), metric_fn=_metric, feedback_map={})
+    candidate = {"flex": SIMPLE_MODULE}
+    batch = [
+        dspy.Example(q="hi", a="hi").with_inputs("q"),
+        dspy.Example(q="boom", a="boom").with_inputs("q"),  # raises inside forward
+    ]
+
+    eval_batch = adapter.evaluate(batch, candidate, capture_traces=True)
+    assert eval_batch.scores == [1.0, 0.0]
+
+    recs = adapter.make_reflective_dataset(candidate, eval_batch, ["flex"])["flex"]
+    assert len(recs) == 2  # the crashed example is not silently dropped from reflection
+    crashed = recs[1]
+    assert crashed["Inputs"] == {"q": "boom"}  # the proposer sees which input broke
+    assert "RuntimeError: runtime crash on this input" in str(crashed["Generated Outputs"])  # and how
 
 
 # --- adapter: which build failures are absorbed ------------------------------
@@ -288,10 +317,12 @@ def test_a_candidate_that_cannot_bind_scores_as_a_failure(label, source) -> None
     adapter = DspyAdapter(student_module=student, metric_fn=_metric, feedback_map={}, failure_score=-1.0)
     ex = dspy.Example(q="hi", a="hi").with_inputs("q")
 
-    result = adapter.evaluate([ex, ex], {make_code_key("self"): source}, capture_traces=False)
+    result = adapter.evaluate([ex, ex], {"self": source}, capture_traces=False)
 
     assert result.scores == [-1.0, -1.0], label
-    assert result.outputs == [None, None]
+    # No usable prediction either way: a bind failure yields None (the batch never ran); a
+    # source that binds but breaks at forward yields a FailedPrediction carrying the error.
+    assert all(o is None or isinstance(o, FailedPrediction) for o in result.outputs), label
 
 
 def test_an_infrastructure_error_during_build_is_not_scored_as_a_failure(monkeypatch) -> None:
@@ -312,7 +343,7 @@ def test_an_infrastructure_error_during_build_is_not_scored_as_a_failure(monkeyp
     ex = dspy.Example(q="hi", a="hi").with_inputs("q")
 
     with pytest.raises(RateLimitError):
-        adapter.evaluate([ex], {make_code_key("self"): SIMPLE_MODULE}, capture_traces=False)
+        adapter.evaluate([ex], {"self": SIMPLE_MODULE}, capture_traces=False)
 
 
 # --- adapter: propose routes code keys to the code proposer ------------------
@@ -322,12 +353,50 @@ def test_propose_new_texts_uses_code_proposer_for_code_keys() -> None:
     reflection = DummyLM([{"revised_source": SIMPLE_MODULE}])
     student = dspy.Flex(Echo)
     adapter = DspyAdapter(student_module=student, metric_fn=_metric, feedback_map={}, reflection_lm=reflection)
-    ckey = make_code_key("self")
+    ckey = "self"
     candidate = {ckey: student.module_src}
     reflective = {ckey: [{"Inputs": {"q": "x"}, "Generated Outputs": "wrong", "Feedback": "bad"}]}
 
     out = adapter.propose_new_texts(candidate, reflective, [ckey])
     assert 'dspy.Predict("q -> a")' in out[ckey]
+
+
+def test_code_proposer_infra_error_propagates() -> None:
+    """An LM infrastructure failure during code proposal is not the candidate's fault. Keeping
+    the original source would make every iteration 'succeed' with an unchanged candidate and
+    silently burn the optimization budget; propagating matches the instruction-proposer paths
+    (and the build-time policy in DspyAdapter.evaluate)."""
+
+    class DownLM(DummyLM):
+        def forward(self, *args, **kwargs):
+            raise LMRateLimitError("429 from the provider", model="dummy")
+
+    student = dspy.Flex(Echo)
+    adapter = DspyAdapter(student_module=student, metric_fn=_metric, feedback_map={}, reflection_lm=DownLM([]))
+    candidate = {"self": student.module_src}
+    reflective = {"self": [{"Inputs": {"q": "x"}, "Generated Outputs": "wrong", "Feedback": "bad"}]}
+
+    with pytest.raises(LMRateLimitError):
+        adapter.propose_new_texts(candidate, reflective, ["self"])
+
+
+def test_code_proposer_bad_proposal_keeps_original() -> None:
+    """A proposal-level failure that is not LM infrastructure (e.g. reflection output the
+    proposal machinery can't handle) keeps that component's original source instead of
+    crashing the run."""
+
+    class GarbledLM(DummyLM):
+        def forward(self, *args, **kwargs):
+            raise RuntimeError("reflection output could not be handled")
+
+    student = dspy.Flex(Echo)
+    adapter = DspyAdapter(student_module=student, metric_fn=_metric, feedback_map={}, reflection_lm=GarbledLM([]))
+    original = student.module_src
+    candidate = {"self": original}
+    reflective = {"self": [{"Inputs": {"q": "x"}, "Generated Outputs": "wrong", "Feedback": "bad"}]}
+
+    out = adapter.propose_new_texts(candidate, reflective, ["self"])
+    assert out == {"self": original}
 
 
 # --- GEPA.compile: seed mixes code + instruction components ------------------
@@ -363,7 +432,7 @@ def test_gepa_seed_mixes_code_and_instruction_components(monkeypatch) -> None:
     optimizer.compile(prog, trainset=[ex], valset=[ex])
 
     seed = captured["seed"]
-    code_key = make_code_key("self.flex")
+    code_key = "flex"
     assert code_key in seed  # one code component for the whole Flex
     assert "class " in seed[code_key]  # the value is the full module class source
     assert "sibling" in seed  # the non-flex predictor's instruction
@@ -375,8 +444,8 @@ def test_gepa_seed_mixes_code_and_instruction_components(monkeypatch) -> None:
 
 
 def test_result_to_dict_keeps_flex_code_components() -> None:
-    """to_dict() must serialize the same components GEPA optimized: a `<path>::code` entry holding
-    the full module_src per Flex, and no entries for the Flex's internal predictors (whose
+    """to_dict() must serialize the same components GEPA optimized: the full module_src per Flex
+    under its parameter path, and no entries for the Flex's internal predictors (whose
     instructions are written by that code, not optimized on their own)."""
     from dspy.teleprompt.gepa.gepa import DspyGEPAResult
 
@@ -402,7 +471,7 @@ def test_result_to_dict_keeps_flex_code_components() -> None:
     )
     (candidate,) = result.to_dict()["candidates"]
 
-    code_key = make_code_key("self.flex")
+    code_key = "flex"
     assert candidate[code_key] == SIMPLE_MODULE  # the optimized code survives serialization
     assert candidate["sibling"] == prog.sibling.signature.instructions
     # The Flex's internal predictors are not components; reporting them would misstate what was

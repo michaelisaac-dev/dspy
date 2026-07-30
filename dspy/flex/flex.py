@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import copy
 from typing import Any, Callable
 
+from dspy.dsp.utils.settings import settings
 from dspy.flex.ctx import FlexContext
+from dspy.predict.parameter import Parameter
 from dspy.primitives.code_interpreter import CodeInterpreter, _validate_interpreter_factory
 from dspy.primitives.module import Module
 from dspy.primitives.python_interpreter import PythonInterpreter
@@ -11,7 +12,7 @@ from dspy.utils.annotation import experimental
 
 
 @experimental(version="3.3.0b2")
-class Flex(Module):
+class Flex(Module, Parameter):
     """A module whose implementation is optimizable code, not just a prompt.
 
     Construct it like any module (``dspy.Flex(MySignature)``). It starts as a baseline that delegates
@@ -51,7 +52,7 @@ class Flex(Module):
         self._flex_ctx = FlexContext(signature_cls=self._signature_cls, tools=list(tools or []))
 
         self._module_src: str | None = None
-        self._attached_names: list[str] = []
+        self.lm = None
 
         _validate_interpreter_factory(interpreter_factory)
         self._interpreter_factory = interpreter_factory
@@ -71,17 +72,43 @@ class Flex(Module):
         return self._module_src
 
     def dump_state(self, json_mode: bool = True) -> dict[str, Any]:
-        state = super().dump_state(json_mode=json_mode)
-        state["module_src"] = self._module_src
-        return state
+        return {
+            "module_src": self._module_src,
+            "lm": self.lm.dump_state() if self.lm else None,
+        }
 
     def load_state(self, state: dict[str, Any], *, allow_unsafe_lm_state: bool = False) -> None:
-        state = dict(state)
-        module_src = state.pop("module_src", None)
+        module_src = state.get("module_src")
         if module_src:
             self._bind_code(module_src)
-        if state:
-            super().load_state(state, allow_unsafe_lm_state=allow_unsafe_lm_state)
+        lm_state = state.get("lm")
+        if lm_state:
+            from dspy.clients.base_lm import BaseLM
+            from dspy.predict.predict import _sanitize_lm_state
+
+            sanitized = _sanitize_lm_state(lm_state, allow_unsafe_lm_state)
+            self.lm = (
+                BaseLM.load_state(sanitized, allow_custom_lm_class=allow_unsafe_lm_state) if sanitized else None
+            )
+        else:
+            self.lm = None
+
+    def reset(self) -> None:
+        """Clear the LM; ``module_src`` is kept, and predictors are rebuilt from it each forward."""
+        self.lm = None
+
+    def named_predictors(self):
+        """A Flex's update unit is only its ``module_src``."""
+        return []
+
+    def set_lm(self, lm) -> None:
+        self.lm = lm
+
+    def get_lm(self):
+        return self.lm
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._name})"
 
     def _baseline_src(self) -> str:
         """Starting source: one predictor over the whole signature, wrapped in a ``dspy.Module``.
@@ -114,58 +141,14 @@ class Flex(Module):
         return f"{base}Module"
 
     def _bind_code(self, module_src: str) -> None:
-        """Bind ``module_src``: The sandbox constructs the predictors and bridges them back to attach onto ``self``.
-        ``forward`` runs in the sandbox."""
-        for old_name in self._attached_names:
-            if hasattr(self, old_name):
-                delattr(self, old_name)
-        self._attached_names = []
-
         self._bridge.bind(module_src)
         self._module_src = module_src
-        self._bridge.ensure_initialized()
 
     def forward(self, *args: Any, **kwargs: Any) -> Any:
         """Run the bound ``forward`` inside the interpreter."""
         if args:
             raise TypeError("dspy.Flex accepts keyword inputs only")
+        if self.lm is not None:
+            with settings.context(lm=self.lm):
+                return self._bridge.forward(kwargs)
         return self._bridge.forward(kwargs)
-
-    def close(self) -> None:
-        """Shut down any interpreter sessions this Flex created."""
-        bridge = getattr(self, "_bridge", None)
-        if bridge is not None:
-            bridge.shutdown()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args: Any) -> None:
-        self.close()
-
-    def __del__(self) -> None:
-        try:
-            self.close()
-        except Exception:
-            pass
-
-    def __deepcopy__(self, memo):
-        # Each copy needs its own interpreter sessions. Sharing `_bridge` by reference would let a
-        # throwaway copy's __del__ tear down the original's live session, so copy everything else and
-        # give the copy a fresh session-less bridge that reuses the already-copied predictors.
-        new = self.__class__.__new__(self.__class__)
-        memo[id(self)] = new
-        for key, value in self.__dict__.items():
-            if key == "_bridge":
-                continue
-            try:
-                setattr(new, key, copy.deepcopy(value, memo))
-            except Exception:
-                setattr(new, key, value)
-        from dspy.flex.bridge import BridgeRuntime
-
-        new._bridge = BridgeRuntime(new, new._interpreter_factory, new._max_predictor_calls)
-        if new._module_src is not None:
-            new._bridge.bind(new._module_src)
-            new._bridge._registry = dict(self._bridge._registry)
-        return new
