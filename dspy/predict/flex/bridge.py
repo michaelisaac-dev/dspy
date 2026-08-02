@@ -1,3 +1,30 @@
+"""Host side of the dspy.Flex sandbox bridge.
+
+A ``Flex`` never executes its optimizer-authored ``module_src`` in the host process. Instead,
+every ``forward``:
+
+1. creates a fresh interpreter from the Flex's ``interpreter_factory`` (``BridgeRuntime.forward``);
+2. injects the sandbox-side shim (``_sandbox_shim.py``), which fakes a tiny ``dspy`` module whose
+   predictor constructors and calls are proxies;
+3. executes ``module_src`` and drives its ``forward`` with the call's inputs.
+
+Only three things cross the sandbox boundary, all as JSON over the interpreter's tool-call
+protocol (``CodeInterpreter.tools``):
+
+- ``__dspy_construct__``: the shim asks the host to build a real predictor (``_Invocation.construct``).
+  The host constructs it from the serialized signature/kwargs and returns a string handle.
+- ``__dspy_call__``: the shim runs a predictor by handle (``_Invocation.call``); the host makes the
+  real LM call and returns the prediction's fields as JSON.
+- user tools passed to ``dspy.Flex(tools=...)``, registered by name so sandbox code can call them
+  directly; the callables themselves stay on the host.
+
+All per-forward state, including the constructed predictors, the predictor-call budget, custom-type
+originals, and the last LM infrastructure error, lives in a ``_Invocation`` created for that
+forward, never on the shared ``Flex``, so concurrent forwards (e.g. threaded evaluation) are
+isolated. The final ``dspy.Prediction`` is parsed against the Flex signature's declared output
+types on the way out (``BridgeRuntime._to_prediction``).
+"""
+
 from __future__ import annotations
 
 import ast
@@ -5,14 +32,19 @@ import functools
 import inspect
 import json
 import logging
+import types
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Union, get_args, get_origin
 
+from pydantic import TypeAdapter
 from pydantic_core import PydanticSerializationError, to_jsonable_python
 
 import dspy
+from dspy import CodeInterpreterError
 from dspy.adapters.types.base_type import Type as _CustomType
-from dspy.primitives.code_interpreter import CodeInterpreterError, _create_interpreter
+from dspy.adapters.utils import parse_value
+from dspy.primitives.code_interpreter import _create_interpreter
+from dspy.signatures.signature import make_signature
 from dspy.utils.exceptions import LMError
 
 logger = logging.getLogger(__name__)
@@ -28,7 +60,6 @@ SIGNATURE_MARKER = "__dspy_sig__"
 # The shim passes tools by name (callables can't cross the JSON boundary); the host resolves the name
 # back to the real tool object passed to dspy.Flex(tools=...).
 TOOL_MARKER = "__dspy_tool__"
-
 # Variable/identifier names used in the per-forward driver code (namespaced to avoid clashing with
 # whatever the optimizer-authored module uses).
 _INPUTS_VAR = "__dspy_flex_inputs"
@@ -64,8 +95,6 @@ def _accepts_interpreter_factory(cls: type) -> bool:
 
 def _resolve_signature(signature: Any, custom_types: dict[str, type] | None = None) -> Any:
     """Turn a shim signature payload back into something a host predictor accepts."""
-    from dspy.signatures.signature import make_signature
-
     if isinstance(signature, dict) and signature.get(SIGNATURE_MARKER):
         # marker always carries a string signature; make_signature applies instructions if given
         return make_signature(signature["signature"], signature.get("instructions"), custom_types=custom_types)
@@ -116,6 +145,16 @@ def _tool_entrypoint(tool: Any) -> Callable[..., Any]:
     return entrypoint
 
 
+def _restoring_entrypoint(fn: Callable[..., Any], originals: dict[str, Any]) -> Callable[..., Any]:
+    """Wrap a tool entrypoint so serialized custom-type inputs arrive as the original objects."""
+
+    @functools.wraps(fn)
+    def entrypoint(**kwargs: Any) -> Any:
+        return fn(**{k: _restore_custom_types(v, originals) for k, v in kwargs.items()})
+
+    return entrypoint
+
+
 def _collect_custom_type_originals(value: Any, out: dict[str, Any]) -> None:
     """Record custom-type instances by their serialized string, recursing into containers."""
     if isinstance(value, _CustomType):
@@ -139,6 +178,13 @@ def _restore_custom_types(value: Any, originals: dict[str, Any]) -> Any:
     return value
 
 
+def _is_field_optional(annotation: Any) -> bool:
+    """True if the field annotation is optional, a union admitting None."""
+    return annotation is type(None) or (
+        get_origin(annotation) in (Union, types.UnionType) and type(None) in get_args(annotation)
+    )
+
+
 class _Invocation:
     """Per-forward bridge state: the predictors this forward constructed (keyed by the sandbox
     attribute name), its predictor-call budget, and the original custom-type objects to restore
@@ -149,7 +195,7 @@ class _Invocation:
         self._originals = originals
         self._predictors: dict[str, Any] = {}
         self._calls = 0
-        self._lm_error: LMError | None = None
+        self._lm_error: tuple[LMError, str] | None = None
 
     def construct(self, kind: str, signature: Any, attr_name: str, kwargs: dict[str, Any] | None = None) -> str:
         self._lm_error = None
@@ -177,24 +223,25 @@ class _Invocation:
         try:
             return prediction_to_fields(predictor(**restored))
         except LMError as e:
-            self._lm_error = e
-            raise
+            tag = f"[dspy bridge lm-error #{self._calls}]"
+            self._lm_error = (e, tag)
+            raise CodeInterpreterError(f"{tag} {type(e).__name__}: {e}") from e
 
 
 class BridgeRuntime:
-    """Owns the host-side bridge callbacks and per-forward interpreter runs for one ``Flex``.
+    """Host side of the dspy.Flex bridge: runs the bound ``module_src`` for one ``Flex``.
 
-    Every ``forward`` creates a fresh interpreter from the factory, executes the shim and the
-    bound source, runs the instance, and shuts the interpreter down. Predictors are built on the
-    host but live in that forward's ``_Invocation`` — nothing is set on the ``Flex`` itself — so
-    nothing outlives the call and parallel forwards are isolated.
-    ``_max_predictor_calls`` caps bridged LM calls per ``forward``.
+    Each ``forward`` creates a fresh interpreter from the factory, executes the shim and the
+    bound source, runs the module instance, and shuts the interpreter down. Predictors are built
+    host-side but held by that forward's ``_Invocation`` — never set on the ``Flex`` — so nothing
+    outlives the call and parallel forwards stay isolated. ``_max_predictor_calls`` caps bridged
+    predictor calls per forward.
 
-    User ``tools`` are registered with the interpreter (callable by name from sandbox) and
-    resolved by name when passed to a bridged sub-predictor; tools authored inside the generated module
-    live in the sandbox. A code-executing sub-predictor (RLM/CodeAct/ProgramOfThought)
-    gets a fresh interpreter from the same factory, so its inner code runs in the backend chosen for
-    Flex. See ``_sub_interpreter_factory``.
+    User ``tools`` are registered with the interpreter, callable by name from the sandbox, and
+    resolved by name when handed to a bridged sub-predictor; functions defined inside the
+    generated module stay in the sandbox. A code-executing sub-predictor (RLM, CodeAct,
+    ProgramOfThought) receives the same interpreter factory, so its inner code runs on the
+    backend chosen for the Flex.
     """
 
     def __init__(self, flex: Any, factory: Callable[[], Any], max_predictor_calls: int | None = 100) -> None:
@@ -218,7 +265,10 @@ class BridgeRuntime:
         interp = _create_interpreter(self._factory)
         try:
             interp.tools.update({CONSTRUCT_TOOL: invocation.construct, CALL_TOOL: invocation.call})
-            interp.tools.update(self._tool_callables())  # user tools callable by name in the sandbox
+            # User tools callable by name in the sandbox.
+            interp.tools.update(
+                {name: _restoring_entrypoint(fn, originals) for name, fn in self._tool_callables().items()}
+            )
             interp.execute(SHIM_SETUP)
             interp.execute(self._module_src)  # defines the class in the sandbox
             code = (
@@ -230,7 +280,9 @@ class BridgeRuntime:
             result = interp.execute(code, variables={_INPUTS_VAR: dict(inputs)})
         except CodeInterpreterError as e:
             if invocation._lm_error is not None:
-                raise invocation._lm_error from e
+                lm_error, tag = invocation._lm_error
+                if tag in str(e):
+                    raise lm_error from e
             raise
         finally:
             try:
@@ -245,19 +297,34 @@ class BridgeRuntime:
         return self._to_prediction(json.loads(result))
 
     def _to_prediction(self, fields: dict[str, Any]) -> Any:
-        from dspy.adapters.utils import parse_value
-
         signature = self._flex.signature
-        missing = [name for name in signature.output_fields if name not in fields]
+        out = dict(fields)
+        filled: set[str] = set()
+        missing: list[str] = []
+        for name, field in signature.output_fields.items():
+            if name in out:
+                continue
+            if not field.is_required():
+                out[name] = field.get_default(call_default_factory=True)
+                filled.add(name)
+            elif _is_field_optional(field.annotation):
+                out[name] = None
+                filled.add(name)
+            else:
+                missing.append(name)
         if missing:
             raise CodeInterpreterError(
-                f"Sandboxed forward returned a dspy.Prediction missing declared output field(s) "
+                f"Sandboxed forward returned a dspy.Prediction missing required output field(s) "
                 f"{missing}; the signature declares {list(signature.output_fields)}."
             )
-        out = dict(fields)
         for name, field in signature.output_fields.items():
+            if name in filled:
+                continue
             try:
-                out[name] = parse_value(out[name], field.annotation)
+                if out[name] is None:
+                    out[name] = TypeAdapter(field.annotation).validate_python(None)
+                else:
+                    out[name] = parse_value(out[name], field.annotation)
             except Exception as e:
                 raise CodeInterpreterError(
                     f"Sandboxed forward returned {out[name]!r} for output field {name!r}, which is "

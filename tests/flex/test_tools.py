@@ -12,14 +12,19 @@ generated code are marked ``deno_required``.
 
 from __future__ import annotations
 
+import re
 import shutil
 import textwrap
 
 import pytest
 
 import dspy
-from dspy.flex import Flex
+from dspy.predict.flex import Flex
+from dspy.predict.flex.bridge import SHIM_SETUP
+from dspy.predict.flex.primitives_doc import PRIMITIVES_CATALOG
 from dspy.primitives.code_interpreter import CodeInterpreterError
+from dspy.teleprompt.gepa.gepa_flex_utils import CodeProposalSignature
+from dspy.teleprompt.gepa.gepa_utils import DspyAdapter
 from dspy.utils.dummies import DummyLM
 from tests.mock_interpreter import MockInterpreter
 
@@ -145,12 +150,6 @@ def test_proposer_prompts_only_advertise_names_the_sandbox_defines() -> None:
     advertised but not defined becomes an AttributeError at bind time, and GEPA scores the
     candidate as a failure with nothing pointing at the real cause.
     """
-    import re
-
-    from dspy.flex.bridge import SHIM_SETUP
-    from dspy.flex.primitives_doc import PRIMITIVES_CATALOG
-    from dspy.teleprompt.gepa.gepa_flex_utils import CodeProposalSignature
-
     # The shim only registers itself as the importable `dspy` inside the sandbox (where the host
     # bridge tools are in globals), so running it here just builds the module object to inspect.
     namespace: dict = {}
@@ -166,7 +165,6 @@ def test_proposer_prompts_only_advertise_names_the_sandbox_defines() -> None:
 
 def test_gepa_proposer_is_told_about_tools() -> None:
     """GEPA can optimize tool usage because the proposer is shown the available tools."""
-    from dspy.teleprompt.gepa.gepa_utils import DspyAdapter
 
     def _metric(gold, pred, trace=None, pred_name=None, pred_trace=None):
         return 1.0
@@ -269,3 +267,37 @@ def test_direct_tool_calls_go_through_the_tool_wrapper() -> None:
     program._bind_code(src('"3"'))
     with pytest.raises(CodeInterpreterError, match="not of type 'integer'"):
         program(q="x")
+
+
+@deno_required
+def test_direct_tool_calls_receive_restored_custom_type_inputs() -> None:
+    """A custom-type input (dspy.Image) crosses into the sandbox as its serialized string; a
+    direct tool call must hand the tool the original object, exactly as a bridged predictor
+    receives it via ``_Invocation.call``."""
+    seen: dict = {}
+
+    def describe(img) -> str:
+        """Describe an image."""
+        seen["img"] = img
+        return "a cat"
+
+    class Caption(dspy.Signature):
+        image: dspy.Image = dspy.InputField()
+        a: str = dspy.OutputField()
+
+    src = textwrap.dedent(
+        """
+        class CaptionModule(dspy.Module):
+            def __init__(self):
+                super().__init__()
+
+            def forward(self, **inputs):
+                return dspy.Prediction(a=describe(img=inputs["image"]))
+        """
+    ).strip()
+
+    program = Flex(Caption, tools=[describe], interpreter_factory=lambda: dspy.PythonInterpreter())
+    program._bind_code(src)
+    image = dspy.Image(url="https://example.com/x.png")
+    assert program(image=image).a == "a cat"
+    assert seen["img"] is image  # the original object, not the serialized tag string

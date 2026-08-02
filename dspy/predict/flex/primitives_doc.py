@@ -34,13 +34,18 @@ class SolveModule(dspy.Module):
 ```
 
 `dspy` is already in scope — do NOT add `import` statements at module scope (import
-stdlib modules like `re` *inside* `forward` if you need them).
+stdlib modules like `re` *inside* `forward` if you need them). Python and standard-library
+availability is defined by this Flex's configured interpreter; candidates are evaluated in that
+interpreter and should not assume host-Python access.
 
 Available DSPy primitives:
 
 - `dspy.Predict("a, b -> c, d")`, one LM call. `result = self.p(a=x, b=y)` returns a
   `dspy.Prediction` object; the declared outputs are attributes on it:
   `result.c`, `result.d`. Signature strings use snake_case names.
+  TYPE the fields whenever you know the type — `"text: str -> count: int, tags: list[str]"` —
+  a typed output is parsed and coerced to that type, while an untyped one comes back as a bare
+  string you must cast yourself.
   Give any predictor task-specific INSTRUCTIONS by constructing it over a
   `dspy.Signature("a, b -> c, d", "natural-language instructions ...")` instead of a bare
   string.

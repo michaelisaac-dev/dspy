@@ -13,16 +13,20 @@ Covers the behavior:
 
 from __future__ import annotations
 
+import shutil
 import textwrap
 
 import pytest
 
 import dspy
 from dspy.teleprompt.bootstrap_trace import FailedPrediction
+from dspy.teleprompt.gepa.gepa import DspyGEPAResult
 from dspy.teleprompt.gepa.gepa_flex_utils import enumerate_flex_submodules
 from dspy.teleprompt.gepa.gepa_utils import DspyAdapter
 from dspy.utils.dummies import DummyLM
 from dspy.utils.exceptions import LMRateLimitError
+
+deno_required = pytest.mark.skipif(shutil.which("deno") is None, reason="Deno is not installed")
 
 # A plain dspy.Predict module class that binds without an LM (no RLM interpreter needed).
 SIMPLE_MODULE = textwrap.dedent(
@@ -145,6 +149,7 @@ def test_build_program_rebinds_flex_code() -> None:
 # --- adapter: selection eval passes the trace to a flex metric ---------------
 
 
+@deno_required
 def test_selection_eval_passes_program_trace_to_declaring_metric() -> None:
     """The selection eval (capture_traces=False) must pass the execution trace to a metric that
     declares `program_trace`, so a trace-dependent score (e.g. an LLM-call penalty that rewards
@@ -168,6 +173,7 @@ def test_selection_eval_passes_program_trace_to_declaring_metric() -> None:
     assert seen.get("trace") is None  # eval-mode semantics of the `trace` argument are preserved
 
 
+@deno_required
 def test_selection_eval_keeps_vanilla_semantics_for_legacy_metric() -> None:
     seen: dict[str, object] = {}
 
@@ -189,6 +195,7 @@ def test_selection_eval_keeps_vanilla_semantics_for_legacy_metric() -> None:
     assert batch.scores == [0.75]
 
 
+@deno_required
 def test_selection_eval_binds_metric_with_required_contract_params() -> None:
     """A metric written to the full GEPAFeedbackMetric signature with `trace`/`pred_name`/
     `pred_trace` REQUIRED (no defaults) must still bind at flex scoring time: flex passes those
@@ -231,6 +238,7 @@ CRASHY_MODULE = textwrap.dedent(
 ).strip()
 
 
+@deno_required
 def test_evaluate_scores_stay_aligned_when_an_example_crashes() -> None:
     """A code candidate that binds fine but raises at runtime on one input must still score
     one-per-example, aligned by position — the gepa engine pairs scores with example ids
@@ -447,7 +455,6 @@ def test_result_to_dict_keeps_flex_code_components() -> None:
     """to_dict() must serialize the same components GEPA optimized: the full module_src per Flex
     under its parameter path, and no entries for the Flex's internal predictors (whose
     instructions are written by that code, not optimized on their own)."""
-    from dspy.teleprompt.gepa.gepa import DspyGEPAResult
 
     class Prog(dspy.Module):
         def __init__(self):
@@ -503,3 +510,32 @@ def test_gepa_plain_module_requires_trainset() -> None:
     optimizer = dspy.GEPA(metric=_metric, reflection_lm=DummyLM([]), max_metric_calls=10)
     with pytest.raises(AssertionError, match=r"[Tt]rainset"):
         optimizer.compile(Plain(), trainset=[])
+
+
+def test_metric_exception_scores_failure_instead_of_aborting() -> None:
+    """Parity with non-Flex GEPA scoring: there the metric runs inside Evaluate's executor, so a
+    raising metric costs that example failure_score. The flex path calls the metric directly and
+    must convert the exception the same way rather than aborting the whole optimization."""
+    from dspy.teleprompt.gepa.gepa_flex_utils import evaluate_with_trace
+
+    class Echo2(dspy.Module):
+        def forward(self, **kwargs):
+            return dspy.Prediction(a=kwargs["q"])
+
+    def metric(example, pred, trace=None):
+        if example.q == "bad":
+            raise RuntimeError("metric bug on this example")
+        return 1.0
+
+    batch = [dspy.Example(q="good").with_inputs("q"), dspy.Example(q="bad").with_inputs("q")]
+    result = evaluate_with_trace(
+        Echo2(),
+        batch,
+        metric_fn=metric,
+        num_threads=1,
+        failure_score=0.0,
+        callback_metadata=None,
+        capture_traces=True,
+    )
+    assert result.scores == [1.0, 0.0]  # the raising example scores failure_score, the rest still count
+    assert result.outputs[0].a == "good"
