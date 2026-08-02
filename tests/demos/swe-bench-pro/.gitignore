@@ -1,0 +1,10 @@
+# Reproducible from `python fetch_data.py`; the upstream clone is ~studies of MB and the
+# manifest carries the full dataset text.
+swebp_upstream/
+swebp_data/
+
+# Run state (resumable; keyed by harness source hash)
+episodes.jsonl
+gepa_log_*/
+*.log
+__pycache__/
