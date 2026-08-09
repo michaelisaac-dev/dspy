@@ -17,9 +17,6 @@ Every name here is ``_dspy``-prefixed to stay clear of generated code; ``FlexCon
 user tool names in that namespace.
 """
 
-import sys as _dspy_sys
-import types as _dspy_types
-
 
 def _dspy_host(_fn, **_kw):
     # Call a registered host tool by name (the CodeInterpreter.tools contract) and return its result.
@@ -112,7 +109,11 @@ def _dspy_tool(func, **_kw):
     return func
 
 
-_dspy = _dspy_types.ModuleType("dspy")
+class _DspyNamespace:
+    """Stand-in for the ``dspy`` module: a plain attribute container, so no ``types`` import."""
+
+
+_dspy = _DspyNamespace()
 _dspy.Module = _DspyModule
 _dspy.Prediction = _DspyPrediction
 _dspy.Signature = _dspy_signature
@@ -120,8 +121,3 @@ _dspy.Tool = _dspy_tool
 for _k in ("Predict", "ChainOfThought", "RLM", "CodeAct", "ProgramOfThought", "ReAct", "ReActV2"):
     setattr(_dspy, _k, _dspy_make_ctor(_k))
 dspy = _dspy
-
-# Register as the importable ``dspy`` only inside the sandbox, where the registered host tools are
-# present in globals().
-if "__dspy_construct__" in globals():
-    _dspy_sys.modules["dspy"] = _dspy

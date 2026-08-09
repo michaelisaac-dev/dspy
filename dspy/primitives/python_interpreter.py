@@ -708,6 +708,19 @@ class PythonInterpreter:
 
         self._raise_terminal_error(f"Too many non-JSON lines ({skipped}) during execution")
 
+    def prepare_for_reuse(self) -> None:
+        """Clear per-session host-side bindings so a pooling factory can recycle this interpreter.
+
+        Resets the tool registry, output fields, and thread ownership while keeping the sandbox
+        process alive; the next user registers its own tools on first execute. Sandbox globals
+        are not touched here — a pooling factory resets them separately. Only call between
+        executions (e.g., ``dspy.PooledInterpreterFactory`` does this when a lease is returned).
+        """
+        self.tools = {}
+        self.output_fields = None
+        self._tools_registered = False
+        self._owner_thread = None
+
     @with_callbacks
     def start(self) -> None:
         """Initialize the Deno/Pyodide sandbox.

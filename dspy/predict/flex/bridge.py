@@ -8,13 +8,15 @@ every ``forward``:
    predictor constructors and calls are proxies;
 3. executes ``module_src`` and drives its ``forward`` with the call's inputs.
 
-Only three things cross the sandbox boundary, all as JSON over the interpreter's tool-call
+Only four things cross the sandbox boundary, all as JSON over the interpreter's tool-call
 protocol (``CodeInterpreter.tools``):
 
 - ``__dspy_construct__``: the shim asks the host to build a real predictor (``_Invocation.construct``).
   The host constructs it from the serialized signature/kwargs and returns a string handle.
 - ``__dspy_call__``: the shim runs a predictor by handle (``_Invocation.call``); the host makes the
   real LM call and returns the prediction's fields as JSON.
+- ``__dspy_return__``: the driver hands the forward's returned prediction fields to the host
+  (``_Invocation.return_result``), so no in-sandbox ``json`` import is needed.
 - user tools passed to ``dspy.Flex(tools=...)``, registered by name so sandbox code can call them
   directly; the callables themselves stay on the host.
 
@@ -40,7 +42,7 @@ from pydantic import TypeAdapter
 from pydantic_core import PydanticSerializationError, to_jsonable_python
 
 import dspy
-from dspy import CodeInterpreterError
+from dspy import CodeExecutionError, CodeInterpreterError
 from dspy.adapters.types.base_type import Type as _CustomType
 from dspy.adapters.utils import parse_value
 from dspy.primitives.code_interpreter import _create_interpreter
@@ -52,6 +54,8 @@ logger = logging.getLogger(__name__)
 # Tool names the shim uses to call the host; must match the names registered in BridgeRuntime.
 CONSTRUCT_TOOL = "__dspy_construct__"
 CALL_TOOL = "__dspy_call__"
+# The per-forward driver hands the returned prediction's fields to the host through this tool.
+RETURN_TOOL = "__dspy_return__"
 
 # Predictors the sandbox shim may construct and the host builds
 BRIDGEABLE_KINDS = ("Predict", "ChainOfThought", "RLM", "CodeAct", "ProgramOfThought", "ReAct", "ReActV2")
@@ -65,11 +69,19 @@ TOOL_MARKER = "__dspy_tool__"
 _INPUTS_VAR = "__dspy_flex_inputs"
 _INSTANCE_VAR = "__dspy_flex_instance"
 _OUT_VAR = "__dspy_flex_out"
-_JSON_VAR = "__dspy_flex_json"
 
 
 # The sandbox-side dspy shim, injected as text into each per-forward interpreter.
 SHIM_SETUP = (Path(__file__).parent / "_sandbox_shim.py").read_text(encoding="utf-8")
+
+# Registers the shim as the importable ``dspy`` so generated code may `import dspy`. Kept out of
+# SHIM_SETUP because it needs `sys`; on backends without import machinery the bridge tolerates
+# this snippet failing.
+SHIM_IMPORT_REGISTRATION = (
+    f'if "{CONSTRUCT_TOOL}" in globals():\n'
+    "    import sys as _dspy_sys\n"
+    '    _dspy_sys.modules["dspy"] = dspy\n'
+)
 
 
 def parse_module_class_name(module_src: str) -> str:
@@ -196,6 +208,17 @@ class _Invocation:
         self._predictors: dict[str, Any] = {}
         self._calls = 0
         self._lm_error: tuple[LMError, str] | None = None
+        self._returned_fields: dict[str, Any] | None = None
+
+    def return_result(self, fields: Any = None) -> bool:
+        """Record the forward's returned prediction fields (the driver calls this once)."""
+        if not isinstance(fields, dict):
+            raise CodeInterpreterError(
+                "Sandboxed forward returned no usable result; the generated forward must return "
+                f"a dspy.Prediction (got {type(fields).__name__})"
+            )
+        self._returned_fields = fields
+        return True
 
     def construct(self, kind: str, signature: Any, attr_name: str, kwargs: dict[str, Any] | None = None) -> str:
         self._lm_error = None
@@ -264,20 +287,32 @@ class BridgeRuntime:
         invocation = _Invocation(self, originals)
         interp = _create_interpreter(self._factory)
         try:
-            interp.tools.update({CONSTRUCT_TOOL: invocation.construct, CALL_TOOL: invocation.call})
+            interp.tools.update(
+                {
+                    CONSTRUCT_TOOL: invocation.construct,
+                    CALL_TOOL: invocation.call,
+                    RETURN_TOOL: invocation.return_result,
+                }
+            )
             # User tools callable by name in the sandbox.
             interp.tools.update(
                 {name: _restoring_entrypoint(fn, originals) for name, fn in self._tool_callables().items()}
             )
             interp.execute(SHIM_SETUP)
+            try:
+                interp.execute(SHIM_IMPORT_REGISTRATION)
+            except CodeExecutionError:
+                # Backend without import machinery; generated code cannot `import dspy` there,
+                # but the `dspy` global from the shim still works.
+                logger.debug("dspy.Flex: sandbox does not support imports; skipping dspy module registration")
             interp.execute(self._module_src)  # defines the class in the sandbox
             code = (
                 f"{_INSTANCE_VAR} = {self._class_name}()\n"
                 f"{_OUT_VAR} = {_INSTANCE_VAR}.forward(**{_INPUTS_VAR})\n"
-                f"import json as {_JSON_VAR}\n"
-                f"{_JSON_VAR}.dumps({_OUT_VAR}._fields if hasattr({_OUT_VAR}, '_fields') else {_OUT_VAR})"
+                f"_dspy_host({RETURN_TOOL!r}, fields={_OUT_VAR}._fields "
+                f"if hasattr({_OUT_VAR}, '_fields') else {_OUT_VAR})"
             )
-            result = interp.execute(code, variables={_INPUTS_VAR: dict(inputs)})
+            interp.execute(code, variables={_INPUTS_VAR: dict(inputs)})
         except CodeInterpreterError as e:
             if invocation._lm_error is not None:
                 lm_error, tag = invocation._lm_error
@@ -289,12 +324,11 @@ class BridgeRuntime:
                 interp.shutdown()
             except Exception:
                 logger.warning("dspy.Flex: interpreter.shutdown() raised after forward", exc_info=True)
-        if not isinstance(result, str) or not result:
+        if invocation._returned_fields is None:
             raise CodeInterpreterError(
-                "Sandboxed forward returned no serializable result; the generated forward must return "
-                f"a dspy.Prediction (got {result!r})"
+                "Sandboxed forward returned no result; the generated forward must return a dspy.Prediction"
             )
-        return self._to_prediction(json.loads(result))
+        return self._to_prediction(invocation._returned_fields)
 
     def _to_prediction(self, fields: dict[str, Any]) -> Any:
         signature = self._flex.signature

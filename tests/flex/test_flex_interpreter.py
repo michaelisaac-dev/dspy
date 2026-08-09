@@ -67,11 +67,23 @@ def test_default_interpreter_factory_is_python_interpreter() -> None:
 
 @deno_required
 def test_default_is_sandbox() -> None:
-    # With no interpreter_factory argument, Flex builds a PythonInterpreter sandbox (needs Deno).
+    # With no interpreter_factory argument, Flex draws warm PythonInterpreter sandboxes from a
+    # shared pool (needs Deno). Each lease still satisfies the CodeInterpreter protocol.
     flex = Flex(Doubler)
     assert flex._bridge is not None
+    assert isinstance(flex._interpreter_factory, dspy.PooledInterpreterFactory)
+    interp = flex._interpreter_factory()
+    try:
+        assert isinstance(interp, dspy.CodeInterpreter)
+        assert isinstance(interp._interpreter, dspy.PythonInterpreter)
+    finally:
+        interp.shutdown()
+
+
+def test_reuse_interpreter_false_keeps_plain_factory() -> None:
+    # Opting out of interpreter reuse keeps the raw factory: a fresh sandbox per forward.
+    flex = Flex(Doubler, reuse_interpreter=False)
     assert flex._interpreter_factory is dspy.PythonInterpreter
-    assert isinstance(flex._interpreter_factory(), dspy.PythonInterpreter)
 
 
 def test_bare_instance_is_rejected() -> None:
@@ -852,3 +864,23 @@ def test_nested_rlm_tool_provenance() -> None:
     assert record["inner_rlm"]["count"] == "1"
     # The host-provided tool itself executed in the host process, wherever it was called from:
     assert host_seen["platform"] == host_platform
+
+
+def test_shim_needs_no_import_machinery() -> None:
+    # Minimal Python backends (no `import` support) must be able to run the shim: it may not
+    # contain import statements, and it must build the `dspy` namespace without __import__.
+    assert "import " not in bridge.SHIM_SETUP.split('"""')[2], "shim body must not import anything"
+
+    safe_builtins = {name: getattr(__builtins__, name) for name in dir(__builtins__)} \
+        if not isinstance(__builtins__, dict) else dict(__builtins__)
+    safe_builtins.pop("__import__", None)
+    namespace: dict = {"__builtins__": safe_builtins}
+    exec(bridge.SHIM_SETUP, namespace)  # Raises if any import sneaks back in.
+    assert hasattr(namespace["dspy"], "Predict")
+
+
+def test_driver_and_import_registration_split() -> None:
+    # The optional sys.modules registration lives outside SHIM_SETUP and is guarded host-side,
+    # so backends without imports still run Flex; Pyodide-style backends still get `import dspy`.
+    assert "sys.modules" not in bridge.SHIM_SETUP
+    assert "_dspy_sys.modules" in bridge.SHIM_IMPORT_REGISTRATION

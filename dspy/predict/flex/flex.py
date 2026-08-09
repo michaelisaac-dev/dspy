@@ -9,10 +9,15 @@ from dspy.predict.flex.ctx import FlexContext
 from dspy.predict.parameter import Parameter
 from dspy.predict.predict import _sanitize_lm_state
 from dspy.primitives.code_interpreter import CodeInterpreter, _validate_interpreter_factory
+from dspy.primitives.interpreter_pool import PooledInterpreterFactory
 from dspy.primitives.module import Module
 from dspy.primitives.python_interpreter import PythonInterpreter
 from dspy.signatures.signature import Signature, ensure_signature
 from dspy.utils.annotation import experimental
+
+# Warm interpreters for the default PythonInterpreter factory, shared across all Flex instances
+# (and their optimizer-made copies) so repeated forwards skip the Deno/Pyodide boot.
+_shared_python_interpreter_pool = PooledInterpreterFactory(PythonInterpreter)
 
 
 @experimental(version="3.3.0")
@@ -40,6 +45,12 @@ class Flex(Module, Parameter):
             sandbox session. Defaults to ``dspy.PythonInterpreter`` (sandbox, requires Deno).
         max_predictor_calls: Maximum number of predictor calls the optimizer-authored code can
             make per ``forward`. ``None`` removes the limit.
+        reuse_interpreter: When True (default), interpreters are drawn from a warm
+            ``dspy.PooledInterpreterFactory`` pool instead of booting a fresh sandbox process
+            every forward; each forward still starts from a reset sandbox namespace. Set to
+            False to boot a brand-new interpreter per forward. Only interpreters exposing
+            ``prepare_for_reuse`` (like ``dspy.PythonInterpreter``) are pooled; others always
+            run fresh.
     """
 
     def __init__(
@@ -49,6 +60,7 @@ class Flex(Module, Parameter):
         tools: list[Any] | None = None,
         interpreter_factory: Callable[[], CodeInterpreter] = PythonInterpreter,
         max_predictor_calls: int | None = 100,
+        reuse_interpreter: bool = True,
     ):
         super().__init__()
 
@@ -60,6 +72,11 @@ class Flex(Module, Parameter):
         self.lm = None
 
         _validate_interpreter_factory(interpreter_factory)
+        if reuse_interpreter and not isinstance(interpreter_factory, PooledInterpreterFactory):
+            if interpreter_factory is PythonInterpreter:
+                interpreter_factory = _shared_python_interpreter_pool
+            else:
+                interpreter_factory = PooledInterpreterFactory(interpreter_factory)
         self._interpreter_factory = interpreter_factory
         self._max_predictor_calls = max_predictor_calls
 
