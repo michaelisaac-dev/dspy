@@ -279,7 +279,8 @@ class GEPA(Teleprompter):
         add_format_failure_as_feedback: Whether to add format failures as feedback. Default is False.
         use_merge: Whether to use merge-based optimization. Default is True.
         max_merge_invocations: The maximum number of merge invocations to perform. Default is 5.
-        num_threads: The number of threads to use for evaluation with `Evaluate`. Optional.
+        num_threads: The total number of threads available for candidate and example evaluation. Multi-proposal
+            candidate evaluations share this budget. Optional.
         failure_score: The score to assign to failed examples. Default is 0.0.
         perfect_score: The maximum score achievable by the metric. Default is 1.0. Used by GEPA
             to determine if all examples in a minibatch are perfect.
@@ -324,6 +325,12 @@ class GEPA(Teleprompter):
               MLflow can be used alongside Weights & Biases (WandB).
             - mlflow_tracking_uri: The tracking URI to use for MLflow (when use_mlflow=True).
             - mlflow_experiment_name: The experiment name to use for MLflow (when use_mlflow=True).
+            - sampling_strategy, selection_strategy, acceptance_criterion: GEPA 0.1.4 proposal controls.
+              DSPy evaluates proposal candidates concurrently within the `num_threads` budget.
+            - wandb_attach_existing, mlflow_attach_existing, tracking_key_prefix: GEPA 0.1.4 tracking controls.
+
+            `max_reflection_cost` is not supported yet because DSPy LMs do not expose the cumulative cost
+            interface GEPA requires. Passing it raises an error instead of silently ignoring the budget.
 
             Note: Parameters already handled by DSPy's GEPA class will be overridden by the direct parameters
             and should not be passed through gepa_kwargs.
@@ -340,8 +347,9 @@ class GEPA(Teleprompter):
         Merge Configuration: GEPA can merge successful program variants using `use_merge=True`.
         The `max_merge_invocations` parameter controls how many merge attempts are made during optimization.
 
-        Evaluation Configuration: Use `num_threads` to parallelize evaluation. The `failure_score` and
-        `perfect_score` parameters help GEPA understand your metric's range and optimize accordingly.
+        Evaluation Configuration: `num_threads` controls total evaluation concurrency and is shared across
+        candidates in multi-proposal batches. The `failure_score` and `perfect_score` parameters help GEPA
+        understand your metric's range and optimize accordingly.
 
         Logging Configuration: Set `log_dir` to save detailed logs and enable checkpoint resuming.
         Use `track_stats=True` to access detailed optimization results via the `detailed_results` attribute.
@@ -450,6 +458,9 @@ class GEPA(Teleprompter):
         self.custom_instruction_proposer = instruction_proposer
         self.component_selector = component_selector
         self.gepa_kwargs = gepa_kwargs or {}
+
+        if self.gepa_kwargs.get("max_reflection_cost") is not None:
+            raise ValueError("max_reflection_cost is not supported by dspy.GEPA yet.")
 
         if "reflection_prompt_template" in self.gepa_kwargs:
             raise ValueError(

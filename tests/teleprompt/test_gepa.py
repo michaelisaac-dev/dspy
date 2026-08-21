@@ -1,4 +1,5 @@
 import json
+import random
 import threading
 from typing import Any
 from unittest import mock
@@ -632,3 +633,71 @@ def test_track_best_outputs_result_structure():
         assert isinstance(entries, list)
         for cand_idx, output in entries:
             assert isinstance(cand_idx, int)
+
+
+def test_gepa_rejects_unsupported_reflection_cost_budget():
+    dspy.GEPA(
+        metric=simple_metric,
+        max_metric_calls=1,
+        reflection_lm=DummyLM([]),
+        gepa_kwargs={"max_reflection_cost": None},
+    )
+
+    with pytest.raises(ValueError, match="max_reflection_cost"):
+        dspy.GEPA(
+            metric=simple_metric,
+            max_metric_calls=1,
+            reflection_lm=DummyLM([]),
+            gepa_kwargs={"max_reflection_cost": 1.0},
+        )
+
+
+def test_adapter_state_round_trips_rng():
+    from dspy.teleprompt.gepa.gepa_utils import DspyAdapter
+
+    adapter = DspyAdapter(SimpleModule("input -> output"), simple_metric, {}, rng=random.Random(42))
+    state = adapter.get_adapter_state()
+    expected = adapter.rng.random()
+    adapter.rng.random()
+    adapter.set_adapter_state(state)
+    assert adapter.rng.random() == expected
+
+
+def test_batch_evaluate_is_parallel_and_preserves_context():
+    from gepa import EvaluationBatch
+
+    from dspy.teleprompt.gepa.gepa_utils import DspyAdapter
+    from dspy.utils.callback_context import ACTIVE_CALL_ID
+
+    adapter = DspyAdapter(SimpleModule("input -> output"), simple_metric, {}, num_threads=4)
+    barrier = threading.Barrier(2)
+    trace_modes = []
+    thread_budgets = []
+
+    def evaluate(batch, candidate, capture_traces=False, num_threads=None):
+        if capture_traces:
+            barrier.wait(timeout=1)
+        trace_modes.append(capture_traces)
+        thread_budgets.append(num_threads)
+        return EvaluationBatch(outputs=[(candidate, dspy.settings.lm, ACTIVE_CALL_ID.get())], scores=[1.0])
+
+    adapter.evaluate = evaluate
+    lm = DummyLM([])
+    token = ACTIVE_CALL_ID.set("parent")
+    try:
+        with dspy.context(lm=lm):
+            results = adapter.batch_evaluate([("first", []), ("second", [])])
+    finally:
+        ACTIVE_CALL_ID.reset(token)
+
+    assert [result.outputs[0] for result in results] == [("first", lm, "parent"), ("second", lm, "parent")]
+
+    adapter.batch_evaluate([("first", [])], capture_traces=False)
+    assert trace_modes == [True, True, False]
+    assert thread_budgets == [2, 2, 4]
+
+    adapter.num_threads = 8
+    adapter.batch_evaluate([("first", []), ("second", []), ("third", [])], capture_traces=False)
+    assert trace_modes == [True, True, False, False, False, False]
+    assert sorted(thread_budgets[-3:]) == [2, 3, 3]
+    assert sum(thread_budgets[-3:]) == 8

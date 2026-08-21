@@ -1,11 +1,11 @@
-# dspy.ProgramOfThought
+# dspy.ReActV2
 
-!!! warning "Deprecated"
+`ReActV2` is the experimental, native-tool-aware replacement for the current `dspy.ReAct` implementation. It will become `dspy.ReAct` in DSPy 3.5. The `dspy.ReActV2` name will remain as a deprecated compatibility alias throughout the 3.5 release line and will be removed in DSPy 3.6. It stores calls and results in structured `dspy.History`, supports multiple tool calls in one turn, and submits the signature's typed output fields through an internal tool.
 
-    `ProgramOfThought` is deprecated and will be removed in DSPy 3.5. [`RLM`](RLM.md) is the preferred replacement.
+For benefits, configuration, differences from ReAct, and the plan to merge the implementation back into the canonical `dspy.ReAct` API, see [ReAct and ReActV2](../../diving-deeper/react.md).
 
 <!-- START_API_REF -->
-::: dspy.ProgramOfThought
+::: dspy.ReActV2
     handler: python
     options:
         members:
