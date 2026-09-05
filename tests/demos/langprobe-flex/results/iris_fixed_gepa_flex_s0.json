@@ -1,0 +1,13 @@
+{
+  "flex": {
+    "module_src": "class SigModule(dspy.Module):\n    def __init__(self):\n        super().__init__()\n\n    def forward(self, **inputs):\n        \"\"\"\n        Deterministic iris classifier that uses numeric rules (no LLM).\n        Primary signal: petal_length (most discriminative).\n        Fallbacks: petal_width, then a crude sepal-based heuristic, then a safe default.\n\n        Returns one of the exact strings: 'setosa', 'versicolor', 'virginica'.\n        \"\"\"\n        def to_float(value):\n            \"\"\"Parse a numeric string like '5.6' or '5,6' -> float. Return None if not parseable.\"\"\"\n            if value is None:\n                return None\n            s = str(value).strip()\n            if s == \"\":\n                return None\n            # Accept comma as decimal separator\n            s = s.replace(\",\", \".\")\n            try:\n                return float(s)\n            except Exception:\n                return None\n\n        pl = to_float(inputs.get(\"petal_length\"))\n        pw = to_float(inputs.get(\"petal_width\"))\n        sl = to_float(inputs.get(\"sepal_length\"))\n        sw = to_float(inputs.get(\"sepal_width\"))\n\n        # Primary deterministic rule (petal length thresholds are standard and highly discriminative):\n        if pl is not None:\n            if pl <= 2.5:\n                return dspy.Prediction(answer=\"setosa\")\n            elif pl <= 4.8:\n                return dspy.Prediction(answer=\"versicolor\")\n            else:\n                return dspy.Prediction(answer=\"virginica\")\n\n        # Fallback 1: petal width thresholds\n        if pw is not None:\n            if pw <= 0.6:\n                return dspy.Prediction(answer=\"setosa\")\n            elif pw <= 1.8:\n                return dspy.Prediction(answer=\"versicolor\")\n            else:\n                return dspy.Prediction(answer=\"virginica\")\n\n        # Fallback 2: simple sepal-based heuristic if both sepal measurements available\n        if sl is not None and sw is not None:\n            # Heuristic: small sepal length + fairly large sepal width often indicates setosa.\n            if sl < 5.0 and sw > 3.0:\n                return dspy.Prediction(answer=\"setosa\")\n            elif sl < 6.5:\n                return dspy.Prediction(answer=\"versicolor\")\n            else:\n                return dspy.Prediction(answer=\"virginica\")\n\n        # Last resort: choose versicolor as a safe default when inputs are missing/unparseable.\n        return dspy.Prediction(answer=\"versicolor\")",
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

@@ -130,10 +130,15 @@ class Flex(Module, Parameter):
         Uses ``dspy.RLM`` when tools are provided; otherwise a single ``dspy.Predict``.
         """
         cls: type[Signature] = self._signature_cls
-        sig_str = self._flex_ctx.render_signature_string()
+        sig_src = self._flex_ctx.render_signature_source()
         returns = ", ".join(f"{name}=result.{name}" for name in cls.output_fields)
         instructions = (getattr(cls, "instructions", "") or "").strip()
-        sig_arg = f"dspy.Signature({sig_str!r}, {instructions!r})" if instructions else repr(sig_str)
+        if instructions:
+            sig_arg = f"dspy.Signature({sig_src}, {instructions!r})"
+        elif sig_src.startswith("{"):
+            sig_arg = f"dspy.Signature({sig_src})"
+        else:
+            sig_arg = sig_src
         tool_names = list(self._flex_ctx.context_names())
         if tool_names:
             attr, ctor = "rlm", f"dspy.RLM({sig_arg}, tools=[{', '.join(tool_names)}])"

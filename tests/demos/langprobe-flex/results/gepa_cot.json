@@ -1,0 +1,80 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "You are given structured patient data (features and encodings matching the UCI heart-disease style dataset). For each input case, produce a short prediction (binary: \"yes\" or \"no\") whether the patient has heart disease and a very brief explicit rationale. Follow these rules exactly.\n\nInput features (always provided unless explicitly missing):\n- age: integer (years)\n- sex: \"male\" or \"female\"\n- cp: chest pain type — one of {\"typical angina\", \"atypical angina\", \"non-anginal pain\", \"asymptomatic\"}\n- trestbps: resting blood pressure (mm Hg), integer\n- chol: serum cholesterol (mg/dl), integer\n- fbs: fasting blood sugar flag — 0 if <= 120 mg/dl, 1 if > 120 mg/dl\n- restecg: resting ECG result — one of {\"normal\", \"ST-T wave abnormality\", \"left ventricular hypertrophy\"}\n- thalach: maximum heart rate achieved (bpm), integer\n- exang: exercise-induced angina — \"yes\" or \"no\"\n- oldpeak: ST depression induced by exercise relative to rest (numeric, e.g., 0.0, 1.2, 3.5)\n- slope: slope of the peak exercise ST segment — one of {\"upsloping\", \"flat\", \"downsloping\"}\n- ca: number of major vessels (0–3) colored by fluoroscopy — integer 0..3\n- thal: thallium stress test — one of {\"normal\", \"fixed defect\", \"reversible defect\"}\n\nRequired output format (return only these two labeled lines, nothing else):\n- reasoning: [1–3 short sentences that cite the most influential features and why they push toward or away from heart disease; do not over-claim causality]\n- answer: yes/no\n\nScoring decision rule (apply by default):\n- Assign points per feature as follows and sum them; final rule: if total >= 4 → predict \"yes\", otherwise predict \"no\".\n  - cp: typical angina +2, atypical angina +1, non-anginal pain +0, asymptomatic +1\n  - sex: male +1\n  - age: >=55 years +1\n  - trestbps: >=140 mm Hg +1\n  - chol: >=240 mg/dl +1\n  - fbs == 1: +1\n  - restecg: \"ST-T wave abnormality\" +1, \"left ventricular hypertrophy\" +1, \"normal\" +0\n  - thalach: <150 +1; 150–170 = 0; >170 −1\n  - exang == \"yes\": +2\n  - oldpeak: >2.0 +2; 1.0–2.0 +1; <1.0 +0\n  - slope: \"downsloping\" +2; \"flat\" +1; \"upsloping\" +0\n  - ca: add +1 per vessel (ca = 0 → 0, ca = 1 → +1, ca = 2 → +2, ca = 3 → +3)\n  - thal: \"normal\" 0; \"fixed defect\" +1; \"reversible defect\" +2\n\nHeuristics and domain indicators (use these to form concise reasoning and to guide overrides):\n- Strong indicators toward heart disease: exang == \"yes\"; oldpeak > 2.0 (marked ST depression); slope == \"downsloping\"; ca >= 1 (higher counts, esp. 2–3, are more predictive); thal == \"reversible defect\" (ischemia) or \"fixed defect\"; cp severity ranking: typical angina > atypical angina > non-anginal; low thalach (<150) increases risk; fbs == 1, trestbps >=140, chol >=240 increase baseline risk.\n- Mild/moderate indicators: restecg showing ST-T abnormality or LVH; slope == \"flat\"; oldpeak 1.0–2.0.\n- Protective/negative indicators: high thalach (>170) is generally protective (subtracts a point in scoring); slope == \"upsloping\"; ca == 0 and thal == \"normal\" reduce probability.\n\nOverride rule (exception to numeric cutoff):\n- If a case has the combination exang == \"yes\" AND oldpeak > 2.0 AND slope == \"downsloping\", treat this as an overwhelmingly strong pattern indicating disease and predict \"yes\" even if the numeric score is < 4. Use this exception only for that specific strong triple-combination.\n\nOther requirements and behavior:\n- Keep reasoning concise: 1–3 sentences that mention the few most influential features (usually 2–4) and whether they push toward or away from heart disease. Use language like \"risk indicator\" or \"reduces probability\" rather than definitive diagnostic claims.\n- Always use the exact field names given above when necessary and do not add extra sections or commentary beyond the two required lines.\n- If any required input is missing or has an invalid value (e.g., ca outside 0–3, unexpected categorical value), instead output a single-line reasoning stating you cannot produce a reliable prediction due to invalid/missing input and do not attempt to score; then set answer to \"no prediction\".\n- Include a brief predictive-model disclaimer in the reasoning sentence(s) when you produce a prediction: e.g., \"This is a predictive model output, not a medical diagnosis — consult a clinician for decisions.\"\n- Do not provide treatment or management advice.\n\nExamples of acceptable output structure (do not copy content; these are formatting examples):\n- reasoning: Patient has exang == \"yes\" and oldpeak 3.4 which are strong risk indicators; ca = 2 and downsloping ST segment add further risk, outweighing protective factors. This is a predictive model output, not a medical diagnosis — consult a clinician for decisions.\n- answer: yes\n\nBe precise, consistent with the scoring table above, and concise in the reasoning.",
+      "fields": [
+        {
+          "prefix": "Age:",
+          "description": "Age in years"
+        },
+        {
+          "prefix": "Sex:",
+          "description": "Sex (male or female)"
+        },
+        {
+          "prefix": "Cp:",
+          "description": "Chest pain type (typical angina, atypical angina, non-anginal pain, asymptomatic)"
+        },
+        {
+          "prefix": "Trestbps:",
+          "description": "Resting blood pressure (in mm Hg on admission to the hospital)"
+        },
+        {
+          "prefix": "Chol:",
+          "description": "Serum cholestoral in mg/dl"
+        },
+        {
+          "prefix": "Fbs:",
+          "description": "Fasting blood sugar > 120 mg/dl (true or false)"
+        },
+        {
+          "prefix": "Restecg:",
+          "description": "Resting electrocardiographic results (normal, ST-T wave abnormality, left ventricular hypertrophy)"
+        },
+        {
+          "prefix": "Thalach:",
+          "description": "Maximum heart rate achieved"
+        },
+        {
+          "prefix": "Exang:",
+          "description": "Exercise induced angina (yes or no)"
+        },
+        {
+          "prefix": "Oldpeak:",
+          "description": "ST depression induced by exercise relative to rest"
+        },
+        {
+          "prefix": "Slope:",
+          "description": "The slope of the peak exercise ST segment (upsloping, flat, downsloping)"
+        },
+        {
+          "prefix": "Ca:",
+          "description": "Number of major vessels (0-3) colored by flourosopy"
+        },
+        {
+          "prefix": "Thal:",
+          "description": "Thalassemia (normal, fixed defect, reversible defect)"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "Does this patient have heart disease? Just yes or no."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

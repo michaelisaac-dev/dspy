@@ -99,12 +99,38 @@ def _dspy_enc(_v):
 
 def _dspy_make_ctor(_kind):
     def _ctor(signature=None, **_kwargs):
+        if isinstance(signature, dict) and not signature.get("__dspy_sig__"):
+            signature = _dspy_signature(signature)
         return _DspyPending(_kind, signature, {_k: _dspy_enc(_v) for _k, _v in _kwargs.items()})
 
     return _ctor
 
 
+def _dspy_field(_io):
+    def _f(**_kw):
+        return {"__dspy_field__": _io, "kwargs": _kw}
+
+    return _f
+
+
+def _dspy_ann_str(_a):
+    if isinstance(_a, str):
+        return _a
+    if isinstance(_a, type):
+        return _a.__name__
+    return repr(_a)
+
+
 def _dspy_signature(signature, instructions=None, **_kw):
+    if isinstance(signature, dict) and "__dspy_fields__" not in signature:
+        _enc = {}
+        for _name, _spec in signature.items():
+            _ann, _fld = _spec if isinstance(_spec, tuple) else (None, _spec)
+            _enc[_name] = {
+                "type": _dspy_ann_str(_ann) if _ann is not None else "str",
+                "field": _fld,
+            }
+        signature = {"__dspy_fields__": _enc}
     return {"__dspy_sig__": True, "signature": signature, "instructions": instructions}
 
 
@@ -117,6 +143,8 @@ _dspy.Module = _DspyModule
 _dspy.Prediction = _DspyPrediction
 _dspy.Signature = _dspy_signature
 _dspy.Tool = _dspy_tool
+_dspy.InputField = _dspy_field("input")
+_dspy.OutputField = _dspy_field("output")
 for _k in ("Predict", "ChainOfThought", "RLM", "CodeAct", "ProgramOfThought", "ReAct", "ReActV2"):
     setattr(_dspy, _k, _dspy_make_ctor(_k))
 dspy = _dspy

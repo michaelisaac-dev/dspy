@@ -1,0 +1,80 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "You are given a single patient record (one instance) drawn from a classic UCI-style heart disease dataset. Your job is to produce a binary prediction whether the patient has heart disease (\"yes\" or \"no\") and a concise reasoning statement that cites the key features that drove the decision.\n\nRequired input fields (you will always receive these, but values may sometimes be encoded differently):\n- age: integer (years)\n- sex: \"male\" or \"female\"\n- cp: chest pain type; one of {\"typical angina\", \"atypical angina\", \"non-anginal pain\", \"asymptomatic\"} (if cp is numeric or encoded, see \"Unexpected/encoded values\" below)\n- trestbps: resting blood pressure in mm Hg (integer)\n- chol: serum cholesterol in mg/dl (integer)\n- fbs: fasting blood sugar flag; 1 if > 120 mg/dl, 0 otherwise (integer 0/1)\n- restecg: resting ECG result; one of {\"normal\", \"ST-T abnormality\", \"left ventricular hypertrophy\"}\n- thalach: maximum heart rate achieved (integer)\n- exang: exercise-induced angina; \"yes\" or \"no\"\n- oldpeak: ST depression induced by exercise relative to rest (decimal)\n- slope: slope of the peak exercise ST segment; one of {\"upsloping\", \"flat\", \"downsloping\"}\n- ca: number of major vessels colored by fluoroscopy (0, 1, 2, or 3)\n- thal: thallium stress test result; one of {\"normal\", \"fixed\", \"reversible\"} (if thal is numeric/encoded, see below)\n\nOutput format (STRICT):\n- Return exactly two fields named \"reasoning\" and \"answer\" (no other fields, no extra text).\n  - reasoning: 1–3 short sentences. Must cite the most important feature values and explain why they support \"yes\" or \"no\". Keep it succinct.\n  - answer: exactly either \"yes\" or \"no\" (lowercase).\n\nDecision rules and weighting (use these to form your reasoning and decision):\n1. Strong (high-weight) positive indicators for heart disease — if any of these are present, favor \"yes\":\n   - ca >= 2 (especially ca = 3).\n   - abnormal thal: \"fixed\" or \"reversible\" (reversible is especially indicative of ischemia).\n   - exang == \"yes\".\n   - cp == \"typical angina\".\n   - slope == \"downsloping\".\n\n2. Moderate indicators — contribute to risk and can support \"yes\" when they cluster or accompany a strong indicator:\n   - oldpeak >= 2.0 (>= 3.0 is stronger). oldpeak < 1.0 is reassuring.\n   - low thalach (max HR): values < ~140 are concerning; >=160 are reassuring.\n   - slope == \"flat\".\n   - restecg == \"left ventricular hypertrophy\".\n   - fbs == 1 is a weak/moderate supportive signal only.\n\n3. Low-weight features:\n   - Elevated chol and trestbps increase baseline risk but are not decisive by themselves.\n   - Age and sex modify risk but rarely flip a decision on their own.\n\n4. Combination and tie-breaking rules:\n   - Predict \"yes\" when one or more strong indicators are present, or when multiple moderate indicators cluster (e.g., oldpeak >=2 plus low thalach plus flat/downsloping slope).\n   - Predict \"no\" when strong indicators are absent and there are reassuring signals: ca = 0, thal = \"normal\", exang = \"no\", cp is non-anginal/atypical/asymptomatic, and oldpeak < 1.0 — even if cholesterol or BP are elevated.\n   - Be conservative: a single moderate indicator (for example oldpeak = 2.4) without supporting strong features should usually result in \"no\" unless accompanied by at least one more moderate or a strong indicator.\n\nHandling unexpected/encoded categorical values:\n- The canonical expected categorical strings are listed above. If a categorical field is given in a numeric/encoded form that does not match the expected strings, do NOT guess mappings silently.\n- Instead:\n  - If you recognize a well-known numeric encoding (common UCI encodings: cp in {1,2,3,4} mapping to {typical, atypical, non-anginal, asymptomatic}; thal in {3,6,7} mapping to {normal,fixed,reversible}), you may map and proceed; in that case explicitly state in the reasoning which mapping you used (briefly).\n  - If you do not recognize or the numeric value is outside common codes (e.g., cp=0 or thal=1), explicitly state in the reasoning that a field is encoded/unexpected and that you are making a best-guess given available data; then make a conservative prediction following the rules above.\n- If a required field is missing, explicitly state uncertainty in the reasoning and make the best-guess binary prediction using the available data.\n\nStylistic and safety constraints:\n- Reasoning must be 1–3 short sentences, focused only on the listed features and decision rules (cite specific feature names and values).\n- Do not provide medical advice or instructions; this is a predictive classification only.\n- Always output exactly the two fields \"reasoning\" and \"answer\" (no extra keys or commentary).\n- answer must be exactly \"yes\" or \"no\", lowercase.\n\nExamples of acceptable outputs (format):\n- {\"reasoning\":\"Exang = yes and oldpeak = 3.4 are strong signals for ischemia; ca is 0 but the combination of exercise-induced angina and high oldpeak favors disease.\",\"answer\":\"yes\"}\n- {\"reasoning\":\"No strong indicators: ca = 0, thal = normal, exang = no, and oldpeak = 0.1 are reassuring, so the patient likely does not have heart disease.\",\"answer\":\"no\"}\n\nEdge-case reminder:\n- If you encounter an input where many fields are encoded numerically or otherwise ambiguous, state your mapping assumptions or uncertainty in the reasoning (briefly) and then apply the decision rules conservatively to choose \"yes\" or \"no\".",
+      "fields": [
+        {
+          "prefix": "Age:",
+          "description": "Age in years"
+        },
+        {
+          "prefix": "Sex:",
+          "description": "Sex (male or female)"
+        },
+        {
+          "prefix": "Cp:",
+          "description": "Chest pain type (typical angina, atypical angina, non-anginal pain, asymptomatic)"
+        },
+        {
+          "prefix": "Trestbps:",
+          "description": "Resting blood pressure (in mm Hg on admission to the hospital)"
+        },
+        {
+          "prefix": "Chol:",
+          "description": "Serum cholestoral in mg/dl"
+        },
+        {
+          "prefix": "Fbs:",
+          "description": "Fasting blood sugar > 120 mg/dl (true or false)"
+        },
+        {
+          "prefix": "Restecg:",
+          "description": "Resting electrocardiographic results (normal, ST-T wave abnormality, left ventricular hypertrophy)"
+        },
+        {
+          "prefix": "Thalach:",
+          "description": "Maximum heart rate achieved"
+        },
+        {
+          "prefix": "Exang:",
+          "description": "Exercise induced angina (yes or no)"
+        },
+        {
+          "prefix": "Oldpeak:",
+          "description": "ST depression induced by exercise relative to rest"
+        },
+        {
+          "prefix": "Slope:",
+          "description": "The slope of the peak exercise ST segment (upsloping, flat, downsloping)"
+        },
+        {
+          "prefix": "Ca:",
+          "description": "Number of major vessels (0-3) colored by flourosopy"
+        },
+        {
+          "prefix": "Thal:",
+          "description": "Thalassemia (normal, fixed defect, reversible defect)"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "Does this patient have heart disease? Just yes or no."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

@@ -48,7 +48,8 @@ Available DSPy primitives:
   string you must cast yourself.
   Give any predictor task-specific INSTRUCTIONS by constructing it over a
   `dspy.Signature("a, b -> c, d", "natural-language instructions ...")` instead of a bare
-  string.
+  string. For per-field guidance, use the dict form:
+  `dspy.Signature({"a": (str, dspy.InputField(desc="...")), "c": (str, dspy.OutputField(desc="..."))}, "instructions")`.
   You may optimize these string instructions. See "Writing and refining instructions"
   below.
 

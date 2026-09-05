@@ -1,0 +1,44 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "You will be given four numeric inputs (in cm):\n- petal_length\n- petal_width\n- sepal_length\n- sepal_width\n\nTask: Predict which Iris species the measurements most likely belong to. Allowed outputs (lowercase): setosa, versicolor, virginica.\n\nPrimary rule (most reliable): use petal dimensions, especially petal_length, because petal measurements separate the three species much better than sepal measurements.\n\nCanonical decision logic to implement:\n1. If petal_length < 2.0 cm → predict \"setosa\".\n2. Else if petal_length < 5.0 cm → predict \"versicolor\".\n3. Else (petal_length ≥ 5.0 cm) → predict \"virginica\".\n\nTie-breakers / refinements for ambiguous cases:\n- If petal_length is near the boundary (use the band 4.5 ≤ petal_length < 5.0) and petal_width is relatively large (petal_width ≥ 1.8 cm), prefer \"virginica\". Otherwise prefer \"versicolor\".\n- If petal_length is borderline and petal_width is also ambiguous (e.g., 1.4–1.8), use sepal dimensions only as a weak tiebreaker: larger sepal_length (e.g., ≥ 6.5 cm) and larger sepal_width (e.g., ≥ 3.0 cm) support \"virginica\"; smaller sepal dimensions support \"versicolor\".\n- Do not override a clear petal_length rule using sepal dimensions (petal rules take precedence).\n\nOutput format (exact):\n- Provide a short \"reasoning\" string (1–3 sentences) that states which measurements drove the decision and which rule was applied.\n- Provide an \"answer\" string with just the species name (one of: setosa, versicolor, virginica).\n\nExamples of expected behavior:\n- petal_length = 1.5 → setosa (petal_length < 2.0)\n- petal_length = 4.7 → versicolor (2.0 ≤ petal_length < 5.0)\n- petal_length = 5.1 → virginica (petal_length ≥ 5.0)\n- petal_length = 4.8 and petal_width = 1.9 → virginica (near-boundary; width large)\n\nBe concise and avoid overclaiming; if measurements are ambiguous, state which measurements were ambiguous and which tiebreaker you used.",
+      "fields": [
+        {
+          "prefix": "Petal Length:",
+          "description": "${petal_length}"
+        },
+        {
+          "prefix": "Petal Width:",
+          "description": "${petal_width}"
+        },
+        {
+          "prefix": "Sepal Length:",
+          "description": "${sepal_length}"
+        },
+        {
+          "prefix": "Sepal Width:",
+          "description": "${sepal_width}"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "setosa, versicolor, or virginica"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

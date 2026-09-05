@@ -321,3 +321,42 @@ def test_end_to_end_forward_after_save_load(tmp_path) -> None:
     result = reloaded(q="hello")
     assert isinstance(result, dspy.Prediction)
     assert result.a == "echoed-back"
+
+
+def test_baseline_preserves_field_metadata() -> None:
+    # The identity baseline must behave like dspy.Predict(signature): field descs and custom
+    # prefixes survive the trip into generated source (dict-form signature reconstruction).
+    class Diagnose(dspy.Signature):
+        """Predict presence of disease."""
+
+        age: str = dspy.InputField(desc="Age in years")
+        answer: str = dspy.OutputField(desc="Just yes or no.", prefix="Verdict:")
+
+    src = dspy.Flex(Diagnose).module_src
+    assert "Age in years" in src
+    assert "Just yes or no." in src
+    assert "prefix='Verdict:'" in src
+
+    # No metadata -> compact string form is kept.
+    class Plain(dspy.Signature):
+        q: str = dspy.InputField()
+        a: str = dspy.OutputField()
+
+    assert "'q: str -> a: str'" in dspy.Flex(Plain).module_src
+
+
+def test_bridge_resolves_dict_form_signature() -> None:
+    from dspy.predict.flex.bridge import _resolve_signature
+
+    payload = {
+        "__dspy_sig__": True,
+        "signature": {"__dspy_fields__": {
+            "age": {"type": "str", "field": {"__dspy_field__": "input", "kwargs": {"desc": "Age in years"}}},
+            "answer": {"type": "str", "field": {"__dspy_field__": "output", "kwargs": {"prefix": "Verdict:"}}},
+        }},
+        "instructions": "Predict presence of disease.",
+    }
+    sig = _resolve_signature(payload)
+    assert sig.instructions == "Predict presence of disease."
+    assert sig.input_fields["age"].json_schema_extra["desc"] == "Age in years"
+    assert sig.output_fields["answer"].json_schema_extra["prefix"] == "Verdict:"

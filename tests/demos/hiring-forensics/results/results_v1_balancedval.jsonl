@@ -1,0 +1,8 @@
+{"treatment": "full", "seed": 0, "arm": "logreg", "balanced_acc": 59.02, "recall_yes": 0.681, "recall_no": 0.499, "n_test": 1500}
+{"treatment": "masked", "seed": 0, "arm": "logreg", "balanced_acc": 59.11, "recall_yes": 0.673, "recall_no": 0.51, "n_test": 1500}
+{"treatment": "full", "seed": 0, "arm": "logreg", "balanced_acc": 57.44, "recall_yes": 0.531, "recall_no": 0.618, "n_test": 1500}
+{"treatment": "masked", "seed": 0, "arm": "logreg", "balanced_acc": 60.65, "recall_yes": 0.566, "recall_no": 0.647, "n_test": 1500}
+{"treatment": "masked", "seed": 0, "arm": "gepa_flex", "balanced_acc": 49.98, "raw_acc": 22.53, "recall_yes": 0.823, "recall_no": 0.177, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 528.9}
+{"treatment": "full", "seed": 0, "arm": "gepa_flex", "balanced_acc": 48.68, "raw_acc": 20.13, "recall_yes": 0.823, "recall_no": 0.151, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 545.3}
+{"treatment": "masked", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.8213, "gender=m": 0.6512, "gender=f": 0.8791, "race=white": 0.8253}}
+{"treatment": "full", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.8472, "gender=m": 0.703, "gender=f": 0.8941, "race=white": 0.8475}}

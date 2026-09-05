@@ -95,11 +95,36 @@ def _accepts_interpreter_factory(cls: type) -> bool:
 def _resolve_signature(signature: Any, custom_types: dict[str, type] | None = None) -> Any:
     """Turn a shim signature payload back into something a host predictor accepts."""
     if isinstance(signature, dict) and signature.get(SIGNATURE_MARKER):
-        # marker always carries a string signature; make_signature applies instructions if given
-        return make_signature(signature["signature"], signature.get("instructions"), custom_types=custom_types)
+        inner = signature["signature"]
+        instructions = signature.get("instructions")
+        if isinstance(inner, dict) and "__dspy_fields__" in inner:
+            return _resolve_field_signature(inner["__dspy_fields__"], instructions, custom_types)
+        return make_signature(inner, instructions, custom_types=custom_types)
     if isinstance(signature, str):
         return make_signature(signature, custom_types=custom_types)
     return signature
+
+
+def _resolve_field_signature(
+    fields: dict[str, Any], instructions: str | None, custom_types: dict[str, type] | None
+) -> Any:
+    """Rebuild a dict-form signature: types via the string parser, then desc/prefix per field."""
+    parts: dict[str, list[str]] = {"input": [], "output": []}
+    for name, spec in fields.items():
+        marker = spec.get("field") or {}
+        io = marker.get("__dspy_field__", "output")
+        parts["input" if io == "input" else "output"].append(f"{name}: {spec.get('type', 'str')}")
+    sig_str = f"{', '.join(parts['input'])} -> {', '.join(parts['output'])}"
+    sig = make_signature(sig_str, instructions, custom_types=custom_types)
+    for name, spec in fields.items():
+        kwargs = {
+            k: v
+            for k, v in ((spec.get("field") or {}).get("kwargs") or {}).items()
+            if k in ("desc", "prefix") and v is not None
+        }
+        if kwargs:
+            sig = sig.with_updated_fields(name, **kwargs)
+    return sig
 
 
 def _jsonable(value: Any) -> Any:

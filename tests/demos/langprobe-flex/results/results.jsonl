@@ -1,0 +1,46 @@
+{"arm": "smoke_predict_base", "score": 0.0, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 5, "wall_s": 9.6}
+{"arm": "smoke_cot_base", "score": 0.0, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 5, "wall_s": 6.8}
+{"arm": "smoke_flex_base", "score": 0.0, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 5, "wall_s": 8.0}
+{"arm": "smoke_predict_base", "score": 40.0, "task_lm_calls": 5, "task_lm_cost_usd": 0.0005, "n_test": 5, "wall_s": 2.7}
+{"arm": "smoke_cot_base", "score": 40.0, "task_lm_calls": 5, "task_lm_cost_usd": 0.001, "n_test": 5, "wall_s": 1.6}
+{"arm": "smoke_flex_base", "score": 0.0, "task_lm_calls": 5, "task_lm_cost_usd": 0.0005, "n_test": 5, "wall_s": 2.0}
+{"arm": "smoke_predict_base", "score": 40.0, "task_lm_calls": 5, "task_lm_cost_usd": 0.0005, "n_test": 5, "wall_s": 1.0}
+{"arm": "smoke_cot_base", "score": 40.0, "task_lm_calls": 5, "task_lm_cost_usd": 0.001, "n_test": 5, "wall_s": 0.0}
+{"arm": "smoke_flex_base", "score": 40.0, "task_lm_calls": 5, "task_lm_cost_usd": 0.0005, "n_test": 5, "wall_s": 1.3}
+{"arm": "predict_base", "score": 59.21, "task_lm_calls": 152, "task_lm_cost_usd": 0.0155, "n_test": 152, "wall_s": 11.3}
+{"arm": "cot_base", "score": 47.37, "task_lm_calls": 152, "task_lm_cost_usd": 0.0315, "n_test": 152, "wall_s": 31.9}
+{"arm": "flex_base", "score": 59.21, "task_lm_calls": 152, "task_lm_cost_usd": 0.0155, "n_test": 152, "wall_s": 35.0}
+{"arm": "gepa_cot", "score": 80.26, "task_lm_calls": 152, "task_lm_cost_usd": 0.0388, "n_test": 152, "wall_s": 25.0}
+{"arm": "gepa_flex", "score": 82.89, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 27.2}
+{"bench": "iris", "seed": 0, "arm": "predict_base", "score": 60.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0036, "n_test": 75, "wall_s": 9.0}
+{"bench": "iris", "seed": 0, "arm": "cot_base", "score": 56.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.009, "n_test": 75, "wall_s": 12.8}
+{"bench": "iris", "seed": 0, "arm": "flex_base", "score": 60.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0036, "n_test": 75, "wall_s": 12.7}
+{"bench": "scone", "seed": 0, "arm": "predict_base", "score": 79.6, "task_lm_calls": 500, "task_lm_cost_usd": 0.0179, "n_test": 500, "wall_s": 39.3}
+{"bench": "heart", "seed": 0, "arm": "oneshot_codegen", "score": 75.66, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 26.6}
+{"bench": "scone", "seed": 0, "arm": "cot_base", "score": 89.0, "task_lm_calls": 500, "task_lm_cost_usd": 0.044, "n_test": 500, "wall_s": 77.3}
+{"bench": "scone", "seed": 0, "arm": "flex_base", "score": 79.6, "task_lm_calls": 500, "task_lm_cost_usd": 0.0179, "n_test": 500, "wall_s": 99.2}
+{"bench": "iris", "seed": 0, "arm": "gepa_cot", "score": 56.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.009, "n_test": 75, "wall_s": 0.2}
+{"bench": "heart", "seed": 1, "arm": "oneshot_codegen", "score": 75.66, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 39.4}
+{"bench": "iris", "seed": 0, "arm": "gepa_flex", "score": 60.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0036, "n_test": 75, "wall_s": 13.8}
+{"bench": "heart", "seed": 0, "arm": "oneshot_codegen", "score": 82.89, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 28.3}
+{"bench": "heart", "seed": 1, "arm": "gepa_cot", "score": 75.0, "task_lm_calls": 152, "task_lm_cost_usd": 0.0396, "n_test": 152, "wall_s": 20.2}
+{"bench": "heart", "seed": 1, "arm": "oneshot_codegen", "score": 80.92, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 35.4}
+{"bench": "heart", "seed": 2, "arm": "oneshot_codegen", "score": 86.18, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 31.8}
+{"bench": "scone", "seed": 0, "arm": "gepa_cot", "score": 86.8, "task_lm_calls": 500, "task_lm_cost_usd": 0.0853, "n_test": 500, "wall_s": 79.0}
+{"bench": "iris", "seed": 0, "arm": "oneshot_codegen", "score": 93.33, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 75, "wall_s": 22.8}
+{"bench": "heart", "seed": 1, "arm": "gepa_flex", "score": 82.89, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 40.4}
+{"bench": "scone", "seed": 0, "arm": "oneshot_codegen", "score": 77.4, "task_lm_calls": 500, "task_lm_cost_usd": 0.0367, "n_test": 500, "wall_s": 124.3}
+{"bench": "iris_fixed", "seed": 0, "arm": "predict_base", "score": 80.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0036, "n_test": 75, "wall_s": 3.4}
+{"bench": "iris_fixed", "seed": 0, "arm": "cot_base", "score": 80.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0085, "n_test": 75, "wall_s": 2.7}
+{"bench": "iris_fixed", "seed": 0, "arm": "flex_base", "score": 80.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0036, "n_test": 75, "wall_s": 13.9}
+{"bench": "scone", "seed": 0, "arm": "gepa_flex", "score": 89.2, "task_lm_calls": 500, "task_lm_cost_usd": 0.0802, "n_test": 500, "wall_s": 148.2}
+{"bench": "iris_fixed", "seed": 0, "arm": "gepa_cot", "score": 96.0, "task_lm_calls": 75, "task_lm_cost_usd": 0.0127, "n_test": 75, "wall_s": 9.7}
+{"bench": "iris_fixed", "seed": 0, "arm": "gepa_flex", "score": 96.0, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 75, "wall_s": 15.3}
+{"bench": "iris_fixed", "seed": 0, "arm": "oneshot_codegen", "score": 94.67, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 75, "wall_s": 13.9}
+{"bench": "heart", "seed": 2, "arm": "gepa_cot", "score": 70.39, "task_lm_calls": 152, "task_lm_cost_usd": 0.0397, "n_test": 152, "wall_s": 20.7}
+{"bench": "heart", "seed": 2, "arm": "gepa_flex", "score": 68.42, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 152, "wall_s": 26.4}
+{"bench": "scone", "seed": 0, "arm": "gepa_flex_lam0.05", "score": 73.2, "task_lm_calls": 473, "task_lm_cost_usd": 0.0322, "n_test": 500, "wall_s": 111.6}
+{"bench": "scone", "seed": 0, "arm": "gepa_flex_lam0.15", "score": 47.6, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 500, "wall_s": 89.3}
+{"bench": "scone", "seed": 0, "arm": "gepa_flex_lam0.4", "score": 52.8, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 500, "wall_s": 90.3}
+{"bench": "scone", "seed": 0, "arm": "gepa_flex_lam0.05_warm", "score": 83.8, "task_lm_calls": 495, "task_lm_cost_usd": 0.0557, "n_test": 500, "wall_s": 134.7}
+{"bench": "scone", "seed": 1, "arm": "gepa_flex", "score": 85.0, "task_lm_calls": 500, "task_lm_cost_usd": 0.0902, "n_test": 500, "wall_s": 140.1}

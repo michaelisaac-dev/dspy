@@ -88,7 +88,7 @@ class DspyGEPAResult:
     """
 
     # Data about the proposed candidates
-    candidates: list[Module]
+    candidates: list[Module | None]  # None for history candidates whose code no longer builds
     parents: list[list[int | None]]
     val_aggregate_scores: list[float]
     val_subscores: list[dict[Any, float]]
@@ -116,7 +116,12 @@ class DspyGEPAResult:
 
     @property
     def best_candidate(self) -> Module:
-        return self.candidates[self.best_idx]
+        best = self.candidates[self.best_idx]
+        if best is None:
+            raise RuntimeError(
+                "The best-scoring GEPA candidate could not be rebuilt from its optimized components."
+            )
+        return best
 
     @property
     def highest_score_achieved_per_val_task(self) -> dict[Any, float]:
@@ -137,7 +142,7 @@ class DspyGEPAResult:
         return components
 
     def to_dict(self) -> dict[str, Any]:
-        cands = [self._candidate_components(cand) for cand in self.candidates]
+        cands = [self._candidate_components(cand) if cand is not None else None for cand in self.candidates]
 
         return dict(
             candidates=cands,
@@ -165,8 +170,17 @@ class DspyGEPAResult:
 
     @staticmethod
     def from_gepa_result(gepa_result: "GEPAResult", adapter: "DspyAdapter") -> "DspyGEPAResult":
+        def build(candidate):
+            # rejected candidates can carry unbuildable code (e.g. a dspy.Flex source that no
+            # longer parses); they must not take down the whole compile result
+            try:
+                return adapter.build_program(candidate)
+            except Exception as e:
+                logger.warning("Skipping unbuildable GEPA candidate: %s: %s", type(e).__name__, e)
+                return None
+
         return DspyGEPAResult(
-            candidates=[adapter.build_program(c) for c in gepa_result.candidates],
+            candidates=[build(c) for c in gepa_result.candidates],
             parents=gepa_result.parents,
             val_aggregate_scores=gepa_result.val_aggregate_scores,
             best_outputs_valset=gepa_result.best_outputs_valset,

@@ -539,3 +539,39 @@ def test_metric_exception_scores_failure_instead_of_aborting() -> None:
     )
     assert result.scores == [1.0, 0.0]  # the raising example scores failure_score, the rest still count
     assert result.outputs[0].a == "good"
+
+
+def test_result_assembly_tolerates_unbuildable_candidates() -> None:
+    # A rejected candidate can carry code that no longer builds (e.g. a SyntaxError source).
+    # from_gepa_result must keep the result usable instead of crashing the whole compile.
+    from types import SimpleNamespace
+
+    from dspy.teleprompt.gepa.gepa import DspyGEPAResult
+
+    good = object()
+
+    class Adapter:
+        def build_program(self, candidate):
+            if candidate == "bad":
+                raise SyntaxError("invalid syntax")
+            return good
+
+    gepa_result = SimpleNamespace(
+        candidates=["bad", "ok"],
+        parents=[None, 0],
+        val_aggregate_scores=[0.0, 1.0],
+        best_outputs_valset=None,
+        val_subscores=[{}, {}],
+        per_val_instance_best_candidates={},
+        discovery_eval_counts=[1, 1],
+        val_aggregate_subscores=None,
+        per_objective_best_candidates=None,
+        objective_pareto_front=None,
+        total_metric_calls=2,
+        num_full_val_evals=1,
+        run_dir=None,
+        seed=0,
+    )
+    result = DspyGEPAResult.from_gepa_result(gepa_result, Adapter())
+    assert result.candidates[0] is None
+    assert result.best_candidate is good

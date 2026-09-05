@@ -1,0 +1,80 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Task summary\n- Input: a set of clinical features for a single adult patient (age, sex, cp, trestbps, chol, fbs, restecg, thalach, exang, oldpeak, slope, ca, thal).\n- Output: a prediction of whether heart disease is present for that patient, returned as:\n  1) a concise reasoning paragraph citing the key features that drove the decision, and\n  2) a single-word answer: \"yes\" (heart disease present) or \"no\" (heart disease absent).\n\nFeature definitions and typical encodings (use these meanings when interpreting inputs)\n- age: years (numeric).\n- sex: \"male\" or \"female\".\n- cp (chest pain type): one of {typical angina, atypical angina, non-anginal pain, asymptomatic}. Typical angina is the strongest chest-pain indicator for ischemic heart disease; non-anginal pain is the least suggestive.\n- trestbps: resting blood pressure in mm Hg (numeric).\n- chol: serum cholesterol in mg/dl (numeric).\n- fbs: fasting blood sugar > 120 mg/dl (0 = false, 1 = true).\n- restecg: resting ECG result; common categories include {normal, ST-T wave abnormality, left ventricular hypertrophy (LVH)}. Abnormal ECGs increase probability.\n- thalach: maximum heart rate achieved (numeric). Higher achieved HR tends to be protective; low maximal HR is a risk sign.\n- exang: exercise-induced angina (\"yes\" or \"no\"). \"yes\" strongly increases probability.\n- oldpeak: ST depression induced by exercise relative to rest (numeric). Larger oldpeak (especially ≥1.0–1.5) increases probability; >2.0 is high risk.\n- slope: slope of the peak exercise ST segment: {upsloping, flat, downsloping}. Upsloping is least concerning, flat intermediate, downsloping most concerning.\n- ca: number of major vessels (0–3) colored by fluoroscopy. Larger values strongly increase probability.\n- thal: categorical: {normal, fixed defect, reversible defect}. Fixed or reversible defects increase probability vs normal.\n\nImportant domain heuristics (how to weigh features)\n- Highest-weight predictors: exercise-induced angina (exang = yes), large ST depression (oldpeak substantially >1), downsloping slope, increased ca (>=1), non-normal thal (fixed or reversible), very low thalach (poor exercise tolerance), typical angina chest pain.\n- Moderate predictors: LVH or ST-T abnormalities on restecg, fasting glucose high (fbs = 1), older age, very high resting BP or cholesterol.\n- Protective/negative predictors: high maximal heart rate achieved (thalach high), upsloping slope, oldpeak ≈ 0, absence of exercise angina, non-anginal chest pain.\n- Clinical context: individual continuous values matter (e.g., oldpeak 0.5 is mild; 1.8 is moderate; >2 is concerning). Interpret continuous values using these thresholds qualitatively.\n\nDeterministic scoring heuristic (follow this for consistent binary outputs)\n- Assign points as follows:\n  - exang = yes: +2\n  - oldpeak:\n    - <1.0: 0\n    - 1.0–1.9: +1\n    - ≥2.0: +2\n  - slope:\n    - upsloping: 0\n    - flat: +1\n    - downsloping: +2\n  - ca: +1 point per vessel (ca = 0..3)\n  - thal:\n    - normal: 0\n    - fixed defect or reversible defect: +2\n  - thalach (max HR):\n    - ≥170: 0\n    - 150–169: +1\n    - <150: +2\n  - cp:\n    - typical angina: +2\n    - atypical angina: +1\n    - non-anginal pain: 0\n    - asymptomatic: +1\n  - restecg:\n    - normal: 0\n    - ST-T abnormality or LVH: +1\n  - fbs = 1: +1\n  - age ≥55: +1\n  - trestbps ≥140: +1\n  - chol ≥240: +1\n\n- Decision rule:\n  - Sum the points. If total score ≥4, predict \"yes\" (heart disease present). If total score <4, predict \"no\".\n\nOutput style and content requirements\n- Provide a short reasoning paragraph (1–3 sentences) that:\n  - names the few (2–4) most influential features and how they contributed (e.g., \"exercise-induced angina and an oldpeak of 1.8 suggest ischemia; thal=... and ca=... add risk\").\n  - states the computed score and threshold briefly (e.g., \"score 5 (threshold 4)\").\n- Then provide the single-word final answer on a new line: \"yes\" or \"no\".\n- Be concise and factual. Do not provide unrelated medical advice or long caveats in the output. If you must warn about uncertainty, keep it short (one sentence).\n\nHandling missing, ambiguous, or novel values\n- If a categorical input is misspelled or ambiguous, ask for clarification.\n- If a numeric value is missing, state that the input is insufficient and request the missing field(s).\n- If values are outside expected ranges, treat them as given but note in the reasoning that the value was out of typical range.\n\nSafety / boundary note\n- This prediction is a probabilistic, data-derived assessment — not a clinical diagnosis. If the patient may be at risk, recommend formal clinical evaluation (briefly, only if asked), but do not replace clinician judgment.\n\nExample output format\n- Reasoning: [one short paragraph describing key features and the score].\n- answer: yes\n\n(Strictly adhere to the scoring heuristic above so outputs are consistent and reproducible.)",
+      "fields": [
+        {
+          "prefix": "Age:",
+          "description": "Age in years"
+        },
+        {
+          "prefix": "Sex:",
+          "description": "Sex (male or female)"
+        },
+        {
+          "prefix": "Cp:",
+          "description": "Chest pain type (typical angina, atypical angina, non-anginal pain, asymptomatic)"
+        },
+        {
+          "prefix": "Trestbps:",
+          "description": "Resting blood pressure (in mm Hg on admission to the hospital)"
+        },
+        {
+          "prefix": "Chol:",
+          "description": "Serum cholestoral in mg/dl"
+        },
+        {
+          "prefix": "Fbs:",
+          "description": "Fasting blood sugar > 120 mg/dl (true or false)"
+        },
+        {
+          "prefix": "Restecg:",
+          "description": "Resting electrocardiographic results (normal, ST-T wave abnormality, left ventricular hypertrophy)"
+        },
+        {
+          "prefix": "Thalach:",
+          "description": "Maximum heart rate achieved"
+        },
+        {
+          "prefix": "Exang:",
+          "description": "Exercise induced angina (yes or no)"
+        },
+        {
+          "prefix": "Oldpeak:",
+          "description": "ST depression induced by exercise relative to rest"
+        },
+        {
+          "prefix": "Slope:",
+          "description": "The slope of the peak exercise ST segment (upsloping, flat, downsloping)"
+        },
+        {
+          "prefix": "Ca:",
+          "description": "Number of major vessels (0-3) colored by flourosopy"
+        },
+        {
+          "prefix": "Thal:",
+          "description": "Thalassemia (normal, fixed defect, reversible defect)"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "Does this patient have heart disease? Just yes or no."
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{"treatment": "full", "seed": 0, "arm": "gepa_flex", "balanced_acc": 55.77, "raw_acc": 83.6, "recall_yes": 0.23, "recall_no": 0.885, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 496.1}
+{"treatment": "masked", "seed": 0, "arm": "gepa_flex", "balanced_acc": 50.51, "raw_acc": 87.4, "recall_yes": 0.071, "recall_no": 0.939, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 538.5}
+{"treatment": "full", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.1269, "gender=m": 0.1144, "gender=f": 0.1262, "race=white": 0.1199}}
+{"treatment": "masked", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.0655, "gender=m": 0.0763, "gender=f": 0.0565, "race=white": 0.0574}}
+{"treatment": "full", "seed": 1, "arm": "gepa_flex", "balanced_acc": 49.99, "raw_acc": 76.67, "recall_yes": 0.186, "recall_no": 0.814, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 553.5}
+{"treatment": "masked", "seed": 1, "arm": "gepa_flex", "balanced_acc": 54.66, "raw_acc": 75.53, "recall_yes": 0.301, "recall_no": 0.792, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 540.0}
+{"treatment": "full", "seed": 1, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.1596, "gender=m": 0.2779, "gender=f": 0.1562, "race=white": 0.2112}}
+{"treatment": "masked", "seed": 1, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.2319, "gender=m": 0.2071, "gender=f": 0.2171, "race=white": 0.1982}}
+{"treatment": "full", "seed": 0, "arm": "gepa_flex_agg", "balanced_acc": 52.99, "raw_acc": 89.73, "recall_yes": 0.097, "recall_no": 0.963, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 289.7}
+{"treatment": "full", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.0232, "gender=m": 0.0054, "gender=f": 0.0538, "race=white": 0.06}}
+{"treatment": "full", "seed": 1, "arm": "gepa_flex_agg", "balanced_acc": 57.09, "raw_acc": 81.53, "recall_yes": 0.283, "recall_no": 0.859, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 1500, "wall_s": 298.4}
+{"treatment": "full", "seed": 1, "arm": "group_rate_audit", "predicted_yes_rates": {"race=black": 0.1692, "gender=m": 0.1444, "gender=f": 0.1545, "race=white": 0.1356}}
+{"bench": "utrecht_B", "treatment": "full", "seed": 0, "arm": "logreg", "balanced_acc": 89.7, "recall_yes": 0.933, "recall_no": 0.861, "n_test": 400}
+{"bench": "utrecht_B", "treatment": "masked", "seed": 0, "arm": "logreg", "balanced_acc": 90.06, "recall_yes": 0.933, "recall_no": 0.868, "n_test": 400}
+{"bench": "utrecht_B", "treatment": "full", "seed": 0, "arm": "gepa_flex_agg", "balanced_acc": 89.05, "raw_acc": 87.0, "recall_yes": 0.941, "recall_no": 0.84, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 400, "wall_s": 329.1}
+{"bench": "utrecht_B", "treatment": "full", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"age=<=25": 0.3733, "age=>25": 0.404, "gender=female": 0.2135, "gender=male": 0.5665, "nationality=Belgian": 0.2558, "nationality=Dutch": 0.4132, "nationality=German": 0.375}}
+{"bench": "utrecht_B", "treatment": "full", "seed": 1, "arm": "gepa_flex_agg", "balanced_acc": 89.52, "raw_acc": 88.0, "recall_yes": 0.933, "recall_no": 0.858, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 400, "wall_s": 79.4}
+{"bench": "utrecht_B", "treatment": "full", "seed": 1, "arm": "group_rate_audit", "predicted_yes_rates": {"age=<=25": 0.34, "age=>25": 0.4, "gender=female": 0.1875, "gender=male": 0.5616, "nationality=Belgian": 0.2558, "nationality=Dutch": 0.3975, "nationality=German": 0.35}}
+{"bench": "utrecht_B", "treatment": "masked", "seed": 0, "arm": "gepa_flex_agg", "balanced_acc": 88.52, "raw_acc": 86.25, "recall_yes": 0.941, "recall_no": 0.829, "task_lm_calls": 0, "task_lm_cost_usd": 0, "n_test": 400, "wall_s": 80.7}
+{"bench": "utrecht_B", "treatment": "masked", "seed": 0, "arm": "group_rate_audit", "predicted_yes_rates": {"age=<=25": 0.4067, "age=>25": 0.396, "gender=female": 0.2448, "gender=male": 0.5517, "nationality=Belgian": 0.3023, "nationality=Dutch": 0.4164, "nationality=German": 0.375}}

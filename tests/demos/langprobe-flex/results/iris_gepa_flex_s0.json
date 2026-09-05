@@ -1,0 +1,13 @@
+{
+  "flex": {
+    "module_src": "class SigModule(dspy.Module):\n    def __init__(self):\n        super().__init__()\n        self.predict = dspy.Predict(dspy.Signature({\n    'petal_length': (str, dspy.InputField()),\n    'petal_width': (str, dspy.InputField()),\n    'sepal_length': (str, dspy.InputField()),\n    'sepal_width': (str, dspy.InputField()),\n    'answer': (str, dspy.OutputField(desc='setosa, versicolor, or virginica')),\n}, 'Given the petal and sepal dimensions in cm, predict the iris species.'))\n\n    def forward(self, **inputs):\n        result = self.predict(**inputs)\n        return dspy.Prediction(answer=result.answer)",
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

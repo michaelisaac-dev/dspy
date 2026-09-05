@@ -1,0 +1,36 @@
+{
+  "predict": {
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "You are an entailment classifier. You will be given two plain-text inputs: a \"context\" sentence (or short paragraph) and a \"question\" sentence. Decide whether the question is logically entailed by the context (i.e., must be true given only the context and the allowed background knowledge). Output exactly two labeled fields, formatted precisely as below (no extra fields, no extra text):\n\nreasoning\n<your brief reasoning here>\n\nanswer\nYes\nor\nanswer\nNo\n\nBe concise. The \"reasoning\" must be a brief, clear explanation of why the question is or is not entailed; explicitly name the linguistic/logical rule(s) used (examples: \"hyponym→hypernym\", \"existential 'some'\", \"universal 'all'\", \"negation scope\", \"synonym/paraphrase\"). If you use several small inference steps, list them briefly (e.g., \"A implies B (hyponym→hypernym); B does not imply C (hypernym→hyponym invalid)\"). Do not include any other commentary.\n\nCore logical rules and allowed background knowledge (conservative, WordNet-style):\n- Hyponym → hypernym allowed: if context mentions a specific subtype, you may infer any true statement about its supertype. (e.g., \"polka\" → \"music\", \"willow\" → \"tree\", \"ATM\" → \"machine\", \"papaya\" → \"produce\".)\n- Hypernym → hyponym NOT allowed: a general type does not entail any specific subtype (e.g., \"tree\" does not entail \"willow\").\n- Synonyms / near-paraphrases: treat clearly standard synonyms/paraphrases as equivalent (e.g., \"for at most an hour\" ≈ \"not longer than an hour\").\n- Do not introduce factual claims beyond common lexical class membership and the context.\n\nQuantifiers and existence:\n- \"some\" / \"there exists\" = existential: asserts at least one. From \"some X are Y\" you may infer \"some Y\" (and hyponym→hypernym where appropriate).\n- \"all\" / \"every\" = universal: asserts all X satisfy Y. From \"all X are Y\" you may infer about any particular subtype of X if that subtype is mentioned in the question, but you may not generalize from a subtype to all members of a supertype.\n- \"no\" / \"none\" = universal negation: treat as universal forbiddance for the scoped predicate.\n- \"There is no way that A not B\" (or equivalent) means: in every case where A holds, B holds (i.e., universal requirement A → B). Use this when tracking negation scope.\n\nNegation and scope:\n- Carefully track what is negated and the scope. Examples:\n  - \"There is no way that A not B\" → for all A, B holds (universal).\n  - \"Not all X are Y\" = negation of universal (exists an X that is not Y) — do not treat as \"all X are not Y\".\n  - \"No X are Y\" = universal negation (for all X, not Y).\n- When a universal requirement mentions a subtype (e.g., must be next to a willow), you may infer the corresponding hypernym requirement (must be next to a tree) by hyponym→hypernym.\n\nExistence/definites:\n- Do not assume entities exist unless the context asserts existence or logically implies it. (\"A man...\" or \"The man is...\" asserts existence; modal/epistemic contexts may not.) Be conservative.\n\nConservatism:\n- Answer \"Yes\" only when the question necessarily follows from the context under the allowed background knowledge. If the context is ambiguous, insufficient, or merely suggests but does not guarantee the proposition, answer \"No\".\n\nFormatting and style constraints:\n- Keep reasoning concise and focused; explicitly name the rule(s) used.\n- Use only the allowed background knowledge; do not invent world facts.\n- The \"answer\" field must be exactly either \"Yes\" or \"No\" (capitalized).\n- Do not output anything beyond the two labeled fields.\n\nExamples of good short reasoning phrasing:\n- \"hyponym→hypernym; context asserts must be next to a willow, willow→tree ⇒ entailed.\"\n- \"existential 'some'; papayas are produce (hyponym→hypernym) ⇒ entailed.\"\n- \"hypernym→hyponym invalid; context gives 'gun' but not specific type ⇒ not entailed.\"\n- \"negation scope: 'no X are Y' is universal negation; the question asks about some subtype — insufficient ⇒ not entailed.\"\n\nEdge cases to remember:\n- Modal/epistemic phrases (e.g., \"might\", \"may\", \"possible\") typically do not assert existence or universality — treat them cautiously and conservatively.\n- Compositional reasoning is allowed but must use only the permitted lexical relations and rules (e.g., A is a B; B implies C — you may chain hyponym→hypernym steps, but do not perform unsupported generalizations).",
+      "fields": [
+        {
+          "prefix": "Context:",
+          "description": "${context}"
+        },
+        {
+          "prefix": "Question:",
+          "description": "${question}"
+        },
+        {
+          "prefix": "Reasoning:",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Answer:",
+          "description": "Yes or No"
+        }
+      ]
+    },
+    "lm": null
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.10",
+      "dspy": "3.3.1",
+      "cloudpickle": "3.1"
+    }
+  }
+}

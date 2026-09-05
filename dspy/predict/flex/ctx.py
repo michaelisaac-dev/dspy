@@ -73,6 +73,47 @@ class FlexContext:
 
         return f"{_render(cls.input_fields)} -> {_render(cls.output_fields)}"
 
+    def _field_metadata(self, fname: str, finfo: Any) -> tuple[str | None, str | None]:
+        """(desc, prefix) a faithful reconstruction must carry; None where defaults suffice."""
+        from dspy.signatures.signature import infer_prefix
+
+        extra = finfo.json_schema_extra or {}
+        desc = extra.get("desc")
+        if not desc or desc.startswith("${"):
+            desc = None
+        prefix = extra.get("prefix")
+        if not prefix or prefix == infer_prefix(fname) + ":":
+            prefix = None
+        return desc, prefix
+
+    def render_signature_source(self) -> str:
+        """Source for the baseline's signature argument.
+
+        The compact string form drops per-field ``desc``/``prefix`` metadata, so signatures that
+        carry any get a dict-form reconstruction instead — the baseline must behave exactly like
+        ``dspy.Predict(signature)`` on the host.
+        """
+        cls = self.signature_cls
+        custom = self.custom_types()
+        all_fields = {**cls.input_fields, **cls.output_fields}
+        if all(self._field_metadata(n, f) == (None, None) for n, f in all_fields.items()):
+            return repr(self.render_signature_string())
+
+        lines = ["{"]
+        for role, fields_dict in (("Input", cls.input_fields), ("Output", cls.output_fields)):
+            for fname, finfo in fields_dict.items():
+                try:
+                    ann = render_annotation(finfo.annotation, custom)
+                except ValueError:
+                    ann = "str"
+                desc, prefix = self._field_metadata(fname, finfo)
+                args = [f"desc={desc!r}"] if desc else []
+                if prefix:
+                    args.append(f"prefix={prefix!r}")
+                lines.append(f"    {fname!r}: ({ann}, dspy.{role}Field({', '.join(args)})),")
+        lines.append("}")
+        return "\n".join(lines)
+
     def custom_types(self) -> dict[str, type]:
         cls = self.signature_cls
         out: dict[str, type] = {}
